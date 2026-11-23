@@ -61,13 +61,17 @@
   const appContainer = document.getElementById('app');
   const seriesControls = document.getElementById('seriesControls');
   const seasonSelect = document.getElementById('seasonSelect');
-  const episodeSelect = document.getElementById('episodeSelect');
+  const episodesGrid = document.getElementById('episodesGrid');
   const streamsList = document.getElementById('streamsList');
 
   // Player
   const playerDialog = document.getElementById('playerDialog');
   const playerContainer = document.getElementById('playerContainer');
   const playerOverlay = document.getElementById('playerOverlay');
+  const playerOverlayBottom = document.getElementById('playerOverlayBottom');
+  const playerPrevEpBtn = document.getElementById('playerPrevEpBtn');
+  const playerCurrentEpBadge = document.getElementById('playerCurrentEpBadge');
+  const playerNextEpBtn = document.getElementById('playerNextEpBtn');
   const closePlayerBtn = document.getElementById('closePlayerBtn');
   const closePlayerIconBtn = document.getElementById('closePlayerIconBtn');
   const playerIframe = document.getElementById('playerIframe');
@@ -205,8 +209,12 @@
       </div>
     `;
 
-    // Tap card anywhere -> Play directly!
-    card.onclick = () => openWebPlayer(item, itemType, 1, 1);
+    // Tap card: If movie, play immediately! If series, open episode selector!
+    if (isMovie) {
+      card.onclick = () => openWebPlayer(item, 'movie', 1, 1);
+    } else {
+      card.onclick = () => openDetail(item, 'series');
+    }
 
     // Tap info icon -> Open detail dialog
     const infoBtn = card.querySelector('.card-info-btn');
@@ -281,7 +289,8 @@
 
   function setupSeriesSelects() {
     seasonSelect.innerHTML = '';
-    for (let s = 1; s <= 6; s++) {
+    // Support series with up to 10 seasons
+    for (let s = 1; s <= 10; s++) {
       const opt = document.createElement('option');
       opt.value = s;
       opt.textContent = `Temporada ${s}`;
@@ -291,27 +300,39 @@
 
     seasonSelect.onchange = (e) => {
       state.currentSeason = parseInt(e.target.value, 10);
-      setupEpisodeSelect();
+      state.currentEpisode = 1;
+      renderEpisodesGrid();
       fetchStreams();
     };
 
-    setupEpisodeSelect();
+    renderEpisodesGrid();
   }
 
-  function setupEpisodeSelect() {
-    episodeSelect.innerHTML = '';
-    for (let ep = 1; ep <= 16; ep++) {
-      const opt = document.createElement('option');
-      opt.value = ep;
-      opt.textContent = `Episodio ${ep}`;
-      episodeSelect.appendChild(opt);
+  function renderEpisodesGrid() {
+    if (!episodesGrid) return;
+    episodesGrid.innerHTML = '';
+    const totalEps = 24; // Standard TV season episode count
+    for (let ep = 1; ep <= totalEps; ep++) {
+      const btn = document.createElement('button');
+      btn.className = `ep-btn ${ep === state.currentEpisode ? 'active' : ''}`;
+      btn.textContent = `Ep ${ep}`;
+      btn.onclick = () => {
+        state.currentEpisode = ep;
+        document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (quickPlayBtn) {
+          quickPlayBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Reproducir T${state.currentSeason} E${ep}
+          `;
+        }
+        // Immediately start playing this episode!
+        openWebPlayer(state.activeItem, 'series', state.currentSeason, ep);
+      };
+      episodesGrid.appendChild(btn);
     }
-    episodeSelect.value = state.currentEpisode;
-
-    episodeSelect.onchange = (e) => {
-      state.currentEpisode = parseInt(e.target.value, 10);
-      fetchStreams();
-    };
   }
 
   // Fetch Streams from Vercel Serverless Function
@@ -515,6 +536,32 @@
     const embedUrl = getEmbedUrl(item, type, season, episode, state.currentServer);
     playerIframe.src = embedUrl;
 
+    // Configure series navigation controls in cinema overlay
+    if (type === 'series') {
+      if (playerOverlayBottom) playerOverlayBottom.style.display = 'flex';
+      if (playerCurrentEpBadge) {
+        playerCurrentEpBadge.textContent = `T${season} · E${episode}`;
+      }
+
+      if (playerPrevEpBtn) {
+        playerPrevEpBtn.disabled = (episode <= 1 && season <= 1);
+        playerPrevEpBtn.onclick = (e) => {
+          e.stopPropagation();
+          const prevEp = Math.max(1, episode - 1);
+          openWebPlayer(item, 'series', season, prevEp);
+        };
+      }
+
+      if (playerNextEpBtn) {
+        playerNextEpBtn.onclick = (e) => {
+          e.stopPropagation();
+          openWebPlayer(item, 'series', season, episode + 1);
+        };
+      }
+    } else {
+      if (playerOverlayBottom) playerOverlayBottom.style.display = 'none';
+    }
+
     // Completely hide the background app DOM so mobile Safari CANNOT slide or scroll behind the video!
     if (appContainer) {
       appContainer.style.display = 'none';
@@ -530,6 +577,7 @@
     releaseWakeLock();
     if (overlayTimer) clearTimeout(overlayTimer);
     if (serverDropdownMenu) serverDropdownMenu.classList.remove('show');
+    if (playerOverlayBottom) playerOverlayBottom.style.display = 'none';
     
     // Restore background app DOM
     if (appContainer) {

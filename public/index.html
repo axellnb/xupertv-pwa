@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/style.css?v=3.7">
+  <link rel="stylesheet" href="/style.css?v=3.8">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -300,9 +300,9 @@
               <label for="seasonSelect">Temporada</label>
               <select id="seasonSelect" class="stremio-select"></select>
             </div>
-            <div class="control-group">
-              <label for="episodeSelect">Episodio</label>
-              <select id="episodeSelect" class="stremio-select"></select>
+            <div class="episodes-container">
+              <label class="episodes-label">Toca un episodio para reproducir:</label>
+              <div class="episodes-grid" id="episodesGrid"></div>
             </div>
           </div>
 
@@ -372,6 +372,15 @@
             </button>
           </div>
         </div>
+
+        <!-- Bottom floating series controls -->
+        <div class="player-overlay-bottom" id="playerOverlayBottom" style="display: none;">
+          <div class="player-series-nav">
+            <button class="btn-pill" id="playerPrevEpBtn">⏮ Anterior</button>
+            <span class="player-ep-pill" id="playerCurrentEpBadge">T1 · E1</span>
+            <button class="btn-pill" id="playerNextEpBtn">Siguiente ⏭</button>
+          </div>
+        </div>
       </div>
     </div>
   </dialog>
@@ -379,6 +388,6 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast"></div>
 
-  <script src="/app.js?v=3.7"></script>
+  <script src="/app.js?v=3.8"></script>
 </body>
 </html>
