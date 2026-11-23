@@ -587,7 +587,7 @@
     favItems.forEach(it => favoritesGrid.appendChild(createMediaCard(it)));
   }
 
-  // Search Logic
+  // Search Logic with Instant Local Filter + Universal Online Cinemeta Fallback
   function handleSearch(query) {
     clearTimeout(state.searchDebounce);
     const q = query.trim().toLowerCase();
@@ -618,6 +618,39 @@
       searchResultsTitle.textContent = `Resultados para "${query}" (${matches.length})`;
       searchResultsGrid.innerHTML = '';
       matches.forEach(item => searchResultsGrid.appendChild(createMediaCard(item)));
+
+      // Universal Online Search (Fetches Any Series / Movie in existence from Cinemeta)
+      if (q.length >= 2) {
+        Promise.all([
+          fetch(`https://v3-cinemeta.strem.io/catalog/series/top/search=${encodeURIComponent(q)}.json`).then(r => r.json()).catch(() => ({ metas: [] })),
+          fetch(`https://v3-cinemeta.strem.io/catalog/movie/top/search=${encodeURIComponent(q)}.json`).then(r => r.json()).catch(() => ({ metas: [] }))
+        ]).then(([seriesRes, moviesRes]) => {
+          if (searchInput.value.trim().toLowerCase() !== q) return; // Stale query
+          const onlineMetas = [...(seriesRes.metas || []), ...(moviesRes.metas || [])];
+          const existingIds = new Set(matches.map(m => m.imdb_id || m.id));
+
+          onlineMetas.forEach(m => {
+            const mId = m.imdb_id || m.id;
+            if (mId && !existingIds.has(mId)) {
+              existingIds.add(mId);
+              const mappedItem = {
+                id: (m.type === 'series' ? 'tv_' : 'mov_') + mId,
+                title: m.name,
+                overview: m.description || '',
+                posterUrl: m.poster || '',
+                backdropUrl: m.background || m.poster || '',
+                releaseYear: parseInt(m.releaseInfo || m.year) || 2022,
+                rating: m.imdbRating || '8.0',
+                genres: m.genres || [m.type === 'series' ? 'Serie' : 'Película'],
+                imdb_id: mId
+              };
+              matches.push(mappedItem);
+              searchResultsGrid.appendChild(createMediaCard(mappedItem));
+            }
+          });
+          searchResultsTitle.textContent = `Resultados para "${query}" (${matches.length})`;
+        });
+      }
     }, 180);
   }
 

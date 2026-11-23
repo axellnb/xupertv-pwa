@@ -1,5 +1,465 @@
 [
   {
+    "id": "tv_tt11737520",
+    "title": "One Piece",
+    "overview": "With his straw hat and ragtag crew, young pirate Monkey D. Luffy goes on an epic voyage for treasure.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt11737520/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt11737520/img",
+    "releaseYear": 2023,
+    "rating": "8.3",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy"
+    ],
+    "imdb_id": "tt11737520"
+  },
+  {
+    "id": "tv_tt0185906",
+    "title": "Band of Brothers",
+    "overview": "The men of Easy Company, 506th Parachute Infantry Regiment, train for war and fight across Europe during World War II, forging bonds of brotherhood amid the brutal realities of combat.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt0185906/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt0185906/img",
+    "releaseYear": 2001,
+    "rating": "9.4",
+    "genres": [
+      "Action",
+      "Drama",
+      "History"
+    ],
+    "imdb_id": "tt0185906"
+  },
+  {
+    "id": "tv_tt0475784",
+    "title": "Westworld",
+    "overview": "At the intersection of the near future and the reimagined past, waits a world in which every human appetite can be indulged without consequence.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt0475784/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt0475784/img",
+    "releaseYear": 2016,
+    "rating": "8.4",
+    "genres": [
+      "Drama",
+      "Mystery",
+      "Sci-Fi"
+    ],
+    "imdb_id": "tt0475784"
+  },
+  {
+    "id": "tv_tt3322312",
+    "title": "Daredevil",
+    "overview": "A blind lawyer by day, vigilante by night. Matt Murdock fights the crime of New York as Daredevil.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt3322312/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt3322312/img",
+    "releaseYear": 2015,
+    "rating": "8.6",
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama"
+    ],
+    "imdb_id": "tt3322312"
+  },
+  {
+    "id": "tv_tt8772296",
+    "title": "Euphoria",
+    "overview": "A dark coming-of-age drama exploring love, addiction, friendship and identity in a world full of temptation and uncertainty.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt8772296/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt8772296/img",
+    "releaseYear": 2019,
+    "rating": "8.1",
+    "genres": [
+      "Drama"
+    ],
+    "imdb_id": "tt8772296"
+  },
+  {
+    "id": "tv_tt1475582",
+    "title": "Sherlock",
+    "overview": "In modern-day London, brilliant but eccentric detective Sherlock Holmes teams with war veteran Dr. John Watson to crack baffling crimes, outwit formidable foes, and aid Scotland Yard with razor-sharp deduction.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt1475582/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt1475582/img",
+    "releaseYear": 2010,
+    "rating": "9.0",
+    "genres": [
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "imdb_id": "tt1475582"
+  },
+  {
+    "id": "tv_tt0411008",
+    "title": "Lost",
+    "overview": "The survivors of a plane crash are forced to work together in order to survive on a seemingly deserted tropical island.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt0411008/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt0411008/img",
+    "releaseYear": 2004,
+    "rating": "8.3",
+    "genres": [
+      "Adventure",
+      "Drama",
+      "Fantasy"
+    ],
+    "imdb_id": "tt0411008"
+  },
+  {
+    "id": "tv_tt0773262",
+    "title": "Dexter",
+    "overview": "He's smart. He's lovable. He's Dexter Morgan, America's favorite serial killer, who spends his days solving crimes and his nights committing them.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt0773262/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt0773262/img",
+    "releaseYear": 2006,
+    "rating": "8.6",
+    "genres": [
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "imdb_id": "tt0773262"
+  },
+  {
+    "id": "tv_tt0455275",
+    "title": "Prison Break",
+    "overview": "A structural engineer installs himself in a prison his company helped design, to save his falsely accused brother from a death sentence by breaking both of them out from the inside.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt0455275/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt0455275/img",
+    "releaseYear": 2005,
+    "rating": "8.3",
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama"
+    ],
+    "imdb_id": "tt0455275"
+  },
+  {
+    "id": "tv_tt7221388",
+    "title": "Cobra Kai",
+    "overview": "Decades after their 1984 All Valley Karate Tournament bout, a middle-aged Daniel LaRusso and Johnny Lawrence find themselves martial-arts rivals again.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt7221388/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt7221388/img",
+    "releaseYear": 2018,
+    "rating": "8.4",
+    "genres": [
+      "Action",
+      "Comedy",
+      "Drama"
+    ],
+    "imdb_id": "tt7221388"
+  },
+  {
+    "id": "tv_tt13443470",
+    "title": "Wednesday",
+    "overview": "Follows Wednesday Addams' years as a student, when she attempts to master her emerging psychic ability, thwart a killing spree, and solve the mystery that embroiled her parents.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt13443470/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt13443470/img",
+    "releaseYear": 2022,
+    "rating": "8.0",
+    "genres": [
+      "Comedy",
+      "Crime",
+      "Fantasy"
+    ],
+    "imdb_id": "tt13443470"
+  },
+  {
+    "id": "tv_tt2788316",
+    "title": "Shogun",
+    "overview": "When a mysterious European ship is found marooned in a nearby Japanese fishing village, Lord Yoshii Toranaga discovers secrets that could tip the scales of power and devastate his enemies.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt2788316/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt2788316/img",
+    "releaseYear": 2024,
+    "rating": "8.6",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama"
+    ],
+    "imdb_id": "tt2788316"
+  },
+  {
+    "id": "tv_tt12637874",
+    "title": "Fallout",
+    "overview": "In a future, post-apocalyptic Los Angeles brought about by nuclear decimation, citizens must live in underground bunkers to protect themselves from radiation, mutants and bandits.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt12637874/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt12637874/img",
+    "releaseYear": 2024,
+    "rating": "8.3",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama"
+    ],
+    "imdb_id": "tt12637874"
+  },
+  {
+    "id": "tv_tt4786824",
+    "title": "The Crown",
+    "overview": "Follows the political rivalries and romances of Queen Elizabeth II's reign and the events that shaped Britain for the second half of the 20th century.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt4786824/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt4786824/img",
+    "releaseYear": 2016,
+    "rating": "8.6",
+    "genres": [
+      "Biography",
+      "Drama",
+      "History"
+    ],
+    "imdb_id": "tt4786824"
+  },
+  {
+    "id": "tv_tt2707408",
+    "title": "Narcos",
+    "overview": "A chronicled look at the criminal exploits of Colombian drug lord Pablo Escobar, as well as the many other drug kingpins who plagued the country through the years.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt2707408/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt2707408/img",
+    "releaseYear": 2015,
+    "rating": "8.7",
+    "genres": [
+      "Biography",
+      "Crime",
+      "Drama"
+    ],
+    "imdb_id": "tt2707408"
+  },
+  {
+    "id": "tv_tt0306414",
+    "title": "The Wire",
+    "overview": "The Baltimore drug scene, as seen through the eyes of drug dealers and law enforcement.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt0306414/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt0306414/img",
+    "releaseYear": 2002,
+    "rating": "9.3",
+    "genres": [
+      "Crime",
+      "Drama",
+      "Thriller"
+    ],
+    "imdb_id": "tt0306414"
+  },
+  {
+    "id": "tv_tt0108778",
+    "title": "Friends",
+    "overview": "The personal and professional lives of six friends living in the Manhattan borough of New York City.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt0108778/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt0108778/img",
+    "releaseYear": 1994,
+    "rating": "8.8",
+    "genres": [
+      "Comedy",
+      "Romance"
+    ],
+    "imdb_id": "tt0108778"
+  },
+  {
+    "id": "tv_tt2085059",
+    "title": "Black Mirror",
+    "overview": "Featuring stand-alone dramas -- sharp, suspenseful, satirical tales that explore techno-paranoia -- \"Black Mirror\" is a contemporary reworking of \"The Twilight Zone\" with stories that tap into the collective unease about the moder...",
+    "posterUrl": "https://images.metahub.space/poster/small/tt2085059/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt2085059/img",
+    "releaseYear": 2011,
+    "rating": "8.7",
+    "genres": [
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "imdb_id": "tt2085059"
+  },
+  {
+    "id": "tv_tt2306299",
+    "title": "Vikings",
+    "overview": "Vikings transports us to the brutal and mysterious world of Ragnar Lothbrok, a Viking warrior and farmer who yearns to explore--and raid--the distant shores across the ocean.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt2306299/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt2306299/img",
+    "releaseYear": 2013,
+    "rating": "8.5",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama"
+    ],
+    "imdb_id": "tt2306299"
+  },
+  {
+    "id": "tv_tt1520211",
+    "title": "The Walking Dead",
+    "overview": "Sheriff Deputy Rick Grimes wakes up from a coma to learn the world is in ruins and must lead a group of survivors to stay alive.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt1520211/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt1520211/img",
+    "releaseYear": 2010,
+    "rating": "8.1",
+    "genres": [
+      "Drama",
+      "Horror",
+      "Thriller"
+    ],
+    "imdb_id": "tt1520211"
+  },
+  {
+    "id": "tv_tt5753856",
+    "title": "Dark",
+    "overview": "A family saga with a supernatural twist, set in a German town where the disappearance of two young children exposes the relationships among four families.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt5753856/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt5753856/img",
+    "releaseYear": 2017,
+    "rating": "8.7",
+    "genres": [
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "imdb_id": "tt5753856"
+  },
+  {
+    "id": "tv_tt9140554",
+    "title": "Loki",
+    "overview": "The mercurial villain Loki resumes his role as the God of Mischief in a new series that takes place after the events of “Avengers: Endgame.”",
+    "posterUrl": "https://images.metahub.space/poster/small/tt9140554/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt9140554/img",
+    "releaseYear": 2021,
+    "rating": "8.2",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy"
+    ],
+    "imdb_id": "tt9140554"
+  },
+  {
+    "id": "tv_tt8111088",
+    "title": "The Mandalorian",
+    "overview": "The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt8111088/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt8111088/img",
+    "releaseYear": 2019,
+    "rating": "8.6",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Fantasy"
+    ],
+    "imdb_id": "tt8111088"
+  },
+  {
+    "id": "tv_tt11280740",
+    "title": "Severance",
+    "overview": "Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives. When a mysterious colleague appears outside of work, it begins a journey to discover the truth about their jobs.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt11280740/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt11280740/img",
+    "releaseYear": 2022,
+    "rating": "8.6",
+    "genres": [
+      "Drama",
+      "Mystery",
+      "Sci-Fi"
+    ],
+    "imdb_id": "tt11280740"
+  },
+  {
+    "id": "tv_tt2442560",
+    "title": "Peaky Blinders",
+    "overview": "A gangster family epic set in 1919 Birmingham, England; centered on a gang who sew razor blades in the peaks of their caps, and their fierce boss Tommy Shelby.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt2442560/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt2442560/img",
+    "releaseYear": 2013,
+    "rating": "8.7",
+    "genres": [
+      "Crime",
+      "Drama"
+    ],
+    "imdb_id": "tt2442560"
+  },
+  {
+    "id": "tv_tt10919420",
+    "title": "Squid Game",
+    "overview": "Hundreds of cash-strapped players accept a strange invitation to compete in children's games. A tempting prize awaits, but with deadly high stakes.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt10919420/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt10919420/img",
+    "releaseYear": 2021,
+    "rating": "7.9",
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama"
+    ],
+    "imdb_id": "tt10919420"
+  },
+  {
+    "id": "tv_tt1190634",
+    "title": "The Boys",
+    "overview": "A group of vigilantes set out to take down corrupt superheroes who abuse their superpowers.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt1190634/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt1190634/img",
+    "releaseYear": 2019,
+    "rating": "8.5",
+    "genres": [
+      "Action",
+      "Comedy",
+      "Crime"
+    ],
+    "imdb_id": "tt1190634"
+  },
+  {
+    "id": "tv_tt11198330",
+    "title": "House of the Dragon",
+    "overview": "An internal succession war within House Targaryen at the height of its power, 172 years before the birth of Daenerys Targaryen.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt11198330/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt11198330/img",
+    "releaseYear": 2022,
+    "rating": "8.2",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama"
+    ],
+    "imdb_id": "tt11198330"
+  },
+  {
+    "id": "tv_tt3581920",
+    "title": "The Last of Us",
+    "overview": "After a global pandemic destroys civilization, a hardened survivor takes charge of a 14-year-old girl who may be humanity's last hope.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt3581920/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt3581920/img",
+    "releaseYear": 2023,
+    "rating": "8.4",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Drama"
+    ],
+    "imdb_id": "tt3581920"
+  },
+  {
+    "id": "tv_tt0944947",
+    "title": "Game of Thrones",
+    "overview": "Nine noble families vie for control of Westeros and the Iron Throne, while an ancient threat beyond The Wall begins to stir.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt0944947/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt0944947/img",
+    "releaseYear": 2011,
+    "rating": "9.2",
+    "genres": [
+      "Drama",
+      "Fantasy"
+    ],
+    "imdb_id": "tt0944947"
+  },
+  {
+    "id": "tv_tt4574334",
+    "title": "Stranger Things",
+    "overview": "In 1980s Indiana, a group of young friends witness supernatural forces and secret government exploits. As they search for answers, the children unravel a series of extraordinary mysteries.",
+    "posterUrl": "https://images.metahub.space/poster/small/tt4574334/img",
+    "backdropUrl": "https://images.metahub.space/background/medium/tt4574334/img",
+    "releaseYear": 2016,
+    "rating": "8.6",
+    "genres": [
+      "Drama",
+      "Fantasy",
+      "Horror"
+    ],
+    "imdb_id": "tt4574334"
+  },
+  {
     "id": "tv_5920",
     "title": "El mentalista",
     "overview": "Patrick Jane es un hombre que trabaja como médium televisivo hasta que sufre un duro golpe cuando su mujer e hija son asesinadas. A partir de entonces, decide usar sus habilidades para ayudar a resolver casos de asesinato, trabajando como detective en el Departamento de Investigación de Crímenes de California. El agente Jane será capaz de ver aquello que los demás no pueden y sus poderes de observación y deducción le darán excelentes resultados.",
