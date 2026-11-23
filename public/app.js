@@ -72,6 +72,25 @@
   const playerExtStremioBtn = document.getElementById('playerExtStremioBtn');
   const toast = document.getElementById('toast');
 
+  // Screen Wake Lock & Body Scroll Lock
+  let wakeLock = null;
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+      }
+    } catch (e) {
+      console.warn('WakeLock not supported or denied');
+    }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLock) {
+      wakeLock.release().catch(() => {});
+      wakeLock = null;
+    }
+  }
+
   // Toast Notification
   function showToast(msg) {
     if (!toast) return;
@@ -229,7 +248,8 @@
     // Fetch Streams
     fetchStreams();
 
-    // Open Modal
+    // Open Modal and Lock Body Scroll
+    document.body.classList.add('modal-open');
     detailDialog.showModal();
   }
 
@@ -448,11 +468,15 @@
     const embedUrl = getEmbedUrl(item, type, season, episode, state.currentServer);
     playerIframe.src = embedUrl;
 
+    document.body.classList.add('player-open');
+    requestWakeLock();
     playerDialog.showModal();
   }
 
   // Close Player
   function closePlayer() {
+    releaseWakeLock();
+    document.body.classList.remove('player-open');
     playerIframe.src = 'about:blank';
     playerDialog.close();
   }
@@ -608,10 +632,37 @@
   detailDialog.addEventListener('click', (e) => {
     if (e.target === detailDialog) detailDialog.close();
   });
+  detailDialog.addEventListener('close', () => {
+    document.body.classList.remove('modal-open');
+  });
   closeDetailBtn.addEventListener('click', () => detailDialog.close());
 
+  playerDialog.addEventListener('close', () => {
+    document.body.classList.remove('player-open');
+    releaseWakeLock();
+  });
   closePlayerBtn.addEventListener('click', closePlayer);
   if (closePlayerIconBtn) closePlayerIconBtn.addEventListener('click', closePlayer);
+
+  const playerFullscreenBtn = document.getElementById('playerFullscreenBtn');
+  if (playerFullscreenBtn) {
+    playerFullscreenBtn.addEventListener('click', () => {
+      const elem = playerDialog;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
+    });
+  }
 
   // Carousel Arrow Controls
   document.querySelectorAll('.carousel-arrow').forEach(arrow => {

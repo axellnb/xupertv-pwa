@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/style.css?v=3.0">
+  <link rel="stylesheet" href="/style.css?v=3.1">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -333,12 +333,19 @@
             
             <span class="player-stream-title" id="playerStreamTitle">Reproduciendo</span>
             
-            <button class="player-close-icon-btn" id="closePlayerIconBtn" aria-label="Cerrar">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
+            <div class="player-top-actions">
+              <button class="player-icon-btn" id="playerFullscreenBtn" title="Pantalla Completa" aria-label="Pantalla Completa">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                </svg>
+              </button>
+              <button class="player-icon-btn" id="closePlayerIconBtn" aria-label="Cerrar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <!-- Sub-bar for server switcher & external player launchers -->
@@ -374,6 +381,6 @@
     <div id="toast" class="toast"></div>
   </div>
 
-  <script src="/app.js?v=3.0"></script>
+  <script src="/app.js?v=3.1"></script>
 </body>
 </html>
