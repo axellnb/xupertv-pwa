@@ -461,16 +461,10 @@
     }
   }
 
-  // Floating Cinema Overlay Auto-Hide Controller
-  let overlayTimer = null;
+  // Floating Cinema Top Bar Controller (Always accessible to exit)
   function showOverlay() {
     if (!playerOverlay) return;
     playerOverlay.classList.remove('hidden');
-    clearTimeout(overlayTimer);
-    overlayTimer = setTimeout(() => {
-      if (serverDropdownMenu && serverDropdownMenu.classList.contains('show')) return;
-      playerOverlay.classList.add('hidden');
-    }, 3500);
   }
 
   // In-App Web Video Streaming Logic (Instant Multi-Server Playback)
@@ -507,14 +501,16 @@
     }
     document.body.classList.add('player-open');
     requestWakeLock();
+    try {
+      history.pushState({ playerOpen: true }, '');
+    } catch (_) {}
     playerDialog.showModal();
     showOverlay();
   }
 
-  // Close Player
-  function closePlayer() {
+  // Close Player and Exit Cleanly
+  function closePlayer(triggerHistory = true) {
     releaseWakeLock();
-    if (overlayTimer) clearTimeout(overlayTimer);
     if (serverDropdownMenu) serverDropdownMenu.classList.remove('show');
     
     // Restore background app DOM
@@ -523,7 +519,14 @@
     }
     document.body.classList.remove('player-open');
     playerIframe.src = 'about:blank';
-    playerDialog.close();
+    if (playerDialog.open) {
+      playerDialog.close();
+    }
+    if (triggerHistory && history.state && history.state.playerOpen) {
+      try {
+        history.back();
+      } catch (_) {}
+    }
   }
 
   // Navigate to Home Smoothly
@@ -682,9 +685,28 @@
   });
   closeDetailBtn.addEventListener('click', () => detailDialog.close());
 
-  playerDialog.addEventListener('close', closePlayer);
-  closePlayerBtn.addEventListener('click', closePlayer);
-  if (closePlayerIconBtn) closePlayerIconBtn.addEventListener('click', closePlayer);
+  playerDialog.addEventListener('close', () => closePlayer(false));
+
+  const handlePlayerExit = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    closePlayer();
+  };
+  closePlayerBtn.addEventListener('click', handlePlayerExit);
+  closePlayerBtn.addEventListener('touchend', handlePlayerExit);
+  if (closePlayerIconBtn) {
+    closePlayerIconBtn.addEventListener('click', handlePlayerExit);
+    closePlayerIconBtn.addEventListener('touchend', handlePlayerExit);
+  }
+
+  // Mobile Back-Swipe / History Back Navigation to Exit Video
+  window.addEventListener('popstate', () => {
+    if (playerDialog && playerDialog.open) {
+      closePlayer(false);
+    }
+  });
 
   // Fullscreen Button Logic with Mobile Safari Fallback
   if (playerFullscreenBtn) {
