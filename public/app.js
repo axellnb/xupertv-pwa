@@ -9,7 +9,7 @@
     activeType: 'movie',
     currentSeason: 1,
     currentEpisode: 1,
-    currentServer: 'multiembed',
+    currentServer: 'vidlink',
     searchDebounce: null,
   };
 
@@ -188,6 +188,13 @@
           <span>${item.rating || 'N/A'}</span>
         </span>
         <span class="media-type-pill">${isMovie ? 'Película' : 'Serie'}</span>
+        <button class="card-info-btn" title="Detalles y Sinopsis" aria-label="Detalles">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
       </div>
       <div class="media-info">
         <h4 class="media-title" title="${item.title}">${item.title}</h4>
@@ -198,7 +205,18 @@
       </div>
     `;
 
-    card.onclick = () => openDetail(item, itemType);
+    // Tap card anywhere -> Play directly!
+    card.onclick = () => openWebPlayer(item, itemType, 1, 1);
+
+    // Tap info icon -> Open detail dialog
+    const infoBtn = card.querySelector('.card-info-btn');
+    if (infoBtn) {
+      infoBtn.onclick = (e) => {
+        e.stopPropagation();
+        openDetail(item, itemType);
+      };
+    }
+
     return card;
   }
 
@@ -411,22 +429,22 @@
   }
 
   // Get Embed Player URL for High-Speed Streaming (Reliable Multi-Server)
-  function getEmbedUrl(item, type, season = 1, episode = 1, server = 'multiembed') {
+  function getEmbedUrl(item, type, season = 1, episode = 1, server = 'vidlink') {
     const imdbId = item.imdb_id || item.id;
     const tmdbId = item.id.replace(/^(mov_|tv_)/, '');
 
     if (type === 'movie') {
-      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&tmdb=1`;
+      if (server === 'vidlink') return `https://vidlink.pro/movie/${tmdbId}?primaryColor=e50914&secondaryColor=141414&iconColor=ffffff&autoplay=true`;
       if (server === 'smashy') return `https://player.smashystream.com/movie/${imdbId || tmdbId}`;
+      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&tmdb=1`;
       if (server === 'vidsrc') return `https://vidsrc.sh/embed/movie?imdb=${imdbId}`;
-      if (server === '2embed') return `https://www.2embed.cc/embed/${imdbId}`;
-      return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&tmdb=1`;
+      return `https://vidlink.pro/movie/${tmdbId}?primaryColor=e50914&secondaryColor=141414&iconColor=ffffff&autoplay=true`;
     } else {
-      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&s=${season}&e=${episode}`;
+      if (server === 'vidlink') return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}?primaryColor=e50914&secondaryColor=141414&iconColor=ffffff&autoplay=true`;
       if (server === 'smashy') return `https://player.smashystream.com/tv/${imdbId || tmdbId}?s=${season}&e=${episode}`;
+      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&s=${season}&e=${episode}`;
       if (server === 'vidsrc') return `https://vidsrc.sh/embed/tv?imdb=${imdbId}&season=${season}&episode=${episode}`;
-      if (server === '2embed') return `https://www.2embed.cc/embedtv/${imdbId}&s=${season}&e=${episode}`;
-      return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&s=${season}&e=${episode}`;
+      return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}?primaryColor=e50914&secondaryColor=141414&iconColor=ffffff&autoplay=true`;
     }
   }
 
@@ -478,10 +496,10 @@
 
     // Update Server Dropdown and Label
     const serverNames = {
-      'multiembed': 'Servidor 1',
-      'smashy': 'Servidor 2',
-      'vidsrc': 'Servidor 3',
-      '2embed': 'Servidor 4'
+      'vidlink': 'Servidor 1 (1080p)',
+      'smashy': 'Servidor 2 (Rápido)',
+      'multiembed': 'Servidor 3 (Latino)',
+      'vidsrc': 'Servidor 4 (Alternativo)'
     };
     if (currentServerLabel) {
       currentServerLabel.textContent = serverNames[state.currentServer] || 'Servidor 1';
@@ -724,10 +742,10 @@
         item.classList.add('active');
 
         const serverNames = {
-          'multiembed': 'Servidor 1',
-          'smashy': 'Servidor 2',
-          'vidsrc': 'Servidor 3',
-          '2embed': 'Servidor 4'
+          'vidlink': 'Servidor 1 (1080p)',
+          'smashy': 'Servidor 2 (Rápido)',
+          'multiembed': 'Servidor 3 (Latino)',
+          'vidsrc': 'Servidor 4 (Alternativo)'
         };
         if (currentServerLabel) {
           currentServerLabel.textContent = serverNames[serverKey] || 'Servidor';
