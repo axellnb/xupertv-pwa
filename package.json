@@ -1,0 +1,9 @@
+{
+  "name": "xupertv-pwa",
+  "version": "1.0.0",
+  "description": "XuperTV PWA & Stremio Streaming Portal",
+  "type": "module",
+  "scripts": {
+    "start": "npx serve public"
+  }
+}
