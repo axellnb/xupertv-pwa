@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/style.css?v=3.5">
+  <link rel="stylesheet" href="/style.css?v=3.6">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -354,23 +354,18 @@
 
           <div class="player-top-actions">
             <div class="server-dropdown-wrapper">
-              <button class="server-menu-btn" id="serverMenuBtn" aria-label="Seleccionar Servidor">
-                <span id="currentServerLabel">Servidor 1</span> ▾
+              <button class="server-menu-btn" id="serverMenuBtn" aria-label="Seleccionar Audio y Servidor">
+                <span id="currentServerLabel">Español Latino</span> ▾
               </button>
               <div class="server-dropdown-menu" id="serverDropdownMenu">
-                <button class="server-menu-item active" data-server="smashy">Servidor 1 (Ultra Rápido HD · 1080p)</button>
-                <button class="server-menu-item" data-server="multiembed">Servidor 2 (Audio Latino / Multi)</button>
-                <button class="server-menu-item" data-server="vidsrc">Servidor 3 (Alternativo HD)</button>
-                <button class="server-menu-item" data-server="2embed">Servidor 4 (Respaldo)</button>
+                <button class="server-menu-item active" data-server="multiembed">Audio Español Latino (MultiEmbed)</button>
+                <button class="server-menu-item" data-server="smashy">Ultra Rápido HD (SmashyStream)</button>
+                <button class="server-menu-item" data-server="vidsrc">Original Inglés / Subtítulos (VidSrc)</button>
+                <button class="server-menu-item" data-server="2embed">Servidor de Respaldo (2Embed)</button>
               </div>
             </div>
-            <button class="overlay-circle-btn" id="playerFullscreenBtn" title="Pantalla Completa" aria-label="Pantalla Completa">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-              </svg>
-            </button>
             <button class="overlay-circle-btn" id="closePlayerIconBtn" aria-label="Cerrar">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
@@ -384,6 +379,6 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast"></div>
 
-  <script src="/app.js?v=3.5"></script>
+  <script src="/app.js?v=3.6"></script>
 </body>
 </html>
