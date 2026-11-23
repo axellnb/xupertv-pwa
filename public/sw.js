@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xupertv-cache-v12';
+const CACHE_NAME = 'xupertv-cache-v14';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

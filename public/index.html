@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/style.css?v=3.8">
+  <link rel="stylesheet" href="/style.css?v=3.9">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -273,17 +273,11 @@
               Reproducir
             </button>
             <div class="dialog-secondary-actions">
-              <button class="btn btn-secondary" id="openInStremioQuickBtn" title="Abrir en App de Stremio">
+              <button class="btn btn-secondary" id="openInStremioQuickBtn" title="Abrir en Stremio">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                   <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
                 Stremio
-              </button>
-              <button class="btn btn-secondary" id="openInVlcQuickBtn" title="Abrir en VLC o Outplayer">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                VLC
               </button>
               <button class="btn btn-secondary" id="dialogFavBtn">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -372,15 +366,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Bottom floating series controls -->
-        <div class="player-overlay-bottom" id="playerOverlayBottom" style="display: none;">
-          <div class="player-series-nav">
-            <button class="btn-pill" id="playerPrevEpBtn">⏮ Anterior</button>
-            <span class="player-ep-pill" id="playerCurrentEpBadge">T1 · E1</span>
-            <button class="btn-pill" id="playerNextEpBtn">Siguiente ⏭</button>
-          </div>
-        </div>
       </div>
     </div>
   </dialog>
@@ -388,6 +373,6 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast"></div>
 
-  <script src="/app.js?v=3.8"></script>
+  <script src="/app.js?v=3.9"></script>
 </body>
 </html>

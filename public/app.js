@@ -57,7 +57,6 @@
   const favBtnLabel = document.getElementById('favBtnLabel');
   const quickPlayBtn = document.getElementById('quickPlayBtn');
   const openInStremioQuickBtn = document.getElementById('openInStremioQuickBtn');
-  const openInVlcQuickBtn = document.getElementById('openInVlcQuickBtn');
   const appContainer = document.getElementById('app');
   const seriesControls = document.getElementById('seriesControls');
   const seasonSelect = document.getElementById('seasonSelect');
@@ -68,10 +67,6 @@
   const playerDialog = document.getElementById('playerDialog');
   const playerContainer = document.getElementById('playerContainer');
   const playerOverlay = document.getElementById('playerOverlay');
-  const playerOverlayBottom = document.getElementById('playerOverlayBottom');
-  const playerPrevEpBtn = document.getElementById('playerPrevEpBtn');
-  const playerCurrentEpBadge = document.getElementById('playerCurrentEpBadge');
-  const playerNextEpBtn = document.getElementById('playerNextEpBtn');
   const closePlayerBtn = document.getElementById('closePlayerBtn');
   const closePlayerIconBtn = document.getElementById('closePlayerIconBtn');
   const playerIframe = document.getElementById('playerIframe');
@@ -80,8 +75,6 @@
   const currentServerLabel = document.getElementById('currentServerLabel');
   const serverDropdownMenu = document.getElementById('serverDropdownMenu');
   const playerFullscreenBtn = document.getElementById('playerFullscreenBtn');
-  const playerExtVlcBtn = document.getElementById('playerExtVlcBtn');
-  const playerExtStremioBtn = document.getElementById('playerExtStremioBtn');
   const toast = document.getElementById('toast');
 
   // Screen Wake Lock & Body Scroll Lock
@@ -266,8 +259,7 @@
     }
     if (openInStremioQuickBtn) {
       openInStremioQuickBtn.onclick = () => {
-        const queryId = state.activeItem.imdb_id || state.activeItem.id;
-        window.location.href = `stremio:///detail/${state.activeType}/${queryId}`;
+        openInStremio(state.activeItem, state.activeType, state.currentSeason, state.currentEpisode);
       };
     }
 
@@ -378,6 +370,21 @@
     }
   }
 
+  // Open directly in official Stremio Web / App (Universal iOS & Desktop)
+  function openInStremio(item, type, season = 1, episode = 1) {
+    if (!item) return;
+    const imdbId = item.imdb_id;
+    if (imdbId && imdbId.startsWith('tt')) {
+      if (type === 'series') {
+        window.open(`https://web.stremio.com/#/detail/series/${imdbId}/${season}:${episode}`, '_blank');
+      } else {
+        window.open(`https://web.stremio.com/#/detail/movie/${imdbId}`, '_blank');
+      }
+    } else {
+      window.open(`https://web.stremio.com/#/search?search=${encodeURIComponent(item.title)}`, '_blank');
+    }
+  }
+
   // Render Streams List (Clean, disciplined Stremio style, no emojis)
   function renderStreams(streams) {
     streamsList.innerHTML = '';
@@ -403,14 +410,12 @@
         <div class="stream-actions">
           <button class="btn btn-sm btn-primary play-stream-btn">Ver</button>
           <button class="btn btn-sm btn-outline open-stremio-btn" title="Abrir en Stremio">Stremio</button>
-          <button class="btn btn-sm btn-outline open-vlc-btn" title="Abrir en VLC">VLC</button>
           <button class="btn btn-sm btn-outline copy-magnet-btn" title="Copiar Magnet">Copiar</button>
         </div>
       `;
 
       // Actions
       const playBtn = card.querySelector('.play-stream-btn');
-      const vlcBtn = card.querySelector('.open-vlc-btn');
       const stremioBtn = card.querySelector('.open-stremio-btn');
       const copyBtn = card.querySelector('.copy-magnet-btn');
 
@@ -418,21 +423,8 @@
         openWebPlayer(state.activeItem, state.activeType, state.currentSeason, state.currentEpisode);
       };
 
-      vlcBtn.onclick = () => {
-        if (!magnetUrl) {
-          showToast('No hay enlace magnet');
-          return;
-        }
-        const vlcUrl = `vlc-x-callback://x-callback-url/stream?url=${encodeURIComponent(magnetUrl)}`;
-        window.location.href = vlcUrl;
-        setTimeout(() => {
-          window.location.href = magnetUrl;
-        }, 1200);
-      };
-
       stremioBtn.onclick = () => {
-        const stremioUrl = `stremio:///detail/${state.activeType}/${state.activeItem.imdb_id || state.activeItem.id}`;
-        window.location.href = stremioUrl;
+        openInStremio(state.activeItem, state.activeType, state.currentSeason, state.currentEpisode);
       };
 
       copyBtn.onclick = () => {
@@ -469,19 +461,6 @@
     }
   }
 
-  // Quick launch in VLC / Outplayer
-  function triggerVlcLaunch() {
-    const firstStreamCard = streamsList.querySelector('.stream-card');
-    if (firstStreamCard) {
-      const vlcBtn = firstStreamCard.querySelector('.open-vlc-btn');
-      if (vlcBtn) {
-        vlcBtn.click();
-        return;
-      }
-    }
-    showToast('Buscando enlaces para VLC...');
-  }
-
   // Floating Cinema Overlay Auto-Hide Controller
   let overlayTimer = null;
   function showOverlay() {
@@ -505,20 +484,6 @@
     const seasonEpText = type === 'series' ? ` · T${season} E${episode}` : '';
     playerStreamTitle.textContent = `${item.title}${seasonEpText}`;
 
-    // Configure External Links (if buttons exist)
-    if (playerExtStremioBtn) {
-      const queryId = item.imdb_id || item.id;
-      playerExtStremioBtn.onclick = () => {
-        window.location.href = `stremio:///detail/${type}/${queryId}`;
-      };
-    }
-
-    if (playerExtVlcBtn) {
-      playerExtVlcBtn.onclick = () => {
-        triggerVlcLaunch();
-      };
-    }
-
     // Update Server Dropdown and Label
     const serverNames = {
       'vidsrc': 'Servidor 1 (Ultra HD)',
@@ -536,32 +501,6 @@
     const embedUrl = getEmbedUrl(item, type, season, episode, state.currentServer);
     playerIframe.src = embedUrl;
 
-    // Configure series navigation controls in cinema overlay
-    if (type === 'series') {
-      if (playerOverlayBottom) playerOverlayBottom.style.display = 'flex';
-      if (playerCurrentEpBadge) {
-        playerCurrentEpBadge.textContent = `T${season} · E${episode}`;
-      }
-
-      if (playerPrevEpBtn) {
-        playerPrevEpBtn.disabled = (episode <= 1 && season <= 1);
-        playerPrevEpBtn.onclick = (e) => {
-          e.stopPropagation();
-          const prevEp = Math.max(1, episode - 1);
-          openWebPlayer(item, 'series', season, prevEp);
-        };
-      }
-
-      if (playerNextEpBtn) {
-        playerNextEpBtn.onclick = (e) => {
-          e.stopPropagation();
-          openWebPlayer(item, 'series', season, episode + 1);
-        };
-      }
-    } else {
-      if (playerOverlayBottom) playerOverlayBottom.style.display = 'none';
-    }
-
     // Completely hide the background app DOM so mobile Safari CANNOT slide or scroll behind the video!
     if (appContainer) {
       appContainer.style.display = 'none';
@@ -577,7 +516,6 @@
     releaseWakeLock();
     if (overlayTimer) clearTimeout(overlayTimer);
     if (serverDropdownMenu) serverDropdownMenu.classList.remove('show');
-    if (playerOverlayBottom) playerOverlayBottom.style.display = 'none';
     
     // Restore background app DOM
     if (appContainer) {
@@ -819,14 +757,8 @@
   // External Quick Launch Buttons in Detail Dialog
   if (openInStremioQuickBtn) {
     openInStremioQuickBtn.addEventListener('click', () => {
-      if (!state.activeItem) return;
-      const queryId = state.activeItem.imdb_id || state.activeItem.id;
-      window.location.href = `stremio:///detail/${state.activeType}/${queryId}`;
+      openInStremio(state.activeItem, state.activeType, state.currentSeason, state.currentEpisode);
     });
-  }
-
-  if (openInVlcQuickBtn) {
-    openInVlcQuickBtn.addEventListener('click', triggerVlcLaunch);
   }
 
   // Screen WakeLock Recovery on Visibility / Rotation
