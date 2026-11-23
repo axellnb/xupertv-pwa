@@ -9,7 +9,7 @@
     activeType: 'movie',
     currentSeason: 1,
     currentEpisode: 1,
-    currentServer: 'multiembed',
+    currentServer: 'vidsrc',
     searchDebounce: null,
   };
 
@@ -429,22 +429,22 @@
   }
 
   // Get Embed Player URL for High-Speed Streaming (Reliable Multi-Server)
-  function getEmbedUrl(item, type, season = 1, episode = 1, server = 'multiembed') {
+  function getEmbedUrl(item, type, season = 1, episode = 1, server = 'vidsrc') {
     const imdbId = item.imdb_id || item.id;
     const tmdbId = item.id.replace(/^(mov_|tv_)/, '');
 
     if (type === 'movie') {
-      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&tmdb=1`;
-      if (server === 'smashy') return `https://player.smashystream.com/movie/${imdbId || tmdbId}`;
       if (server === 'vidsrc') return `https://vidsrc.sh/embed/movie?imdb=${imdbId}`;
+      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&tmdb=1`;
       if (server === '2embed') return `https://www.2embed.cc/embed/${imdbId}`;
-      return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&tmdb=1`;
+      if (server === 'smashy') return `https://player.smashystream.com/movie/${imdbId || tmdbId}`;
+      return `https://vidsrc.sh/embed/movie?imdb=${imdbId}`;
     } else {
-      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&s=${season}&e=${episode}`;
-      if (server === 'smashy') return `https://player.smashystream.com/tv/${imdbId || tmdbId}?s=${season}&e=${episode}`;
       if (server === 'vidsrc') return `https://vidsrc.sh/embed/tv?imdb=${imdbId}&season=${season}&episode=${episode}`;
+      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&s=${season}&e=${episode}`;
       if (server === '2embed') return `https://www.2embed.cc/embedtv/${imdbId}&s=${season}&e=${episode}`;
-      return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&s=${season}&e=${episode}`;
+      if (server === 'smashy') return `https://player.smashystream.com/tv/${imdbId || tmdbId}?s=${season}&e=${episode}`;
+      return `https://vidsrc.sh/embed/tv?imdb=${imdbId}&season=${season}&episode=${episode}`;
     }
   }
 
@@ -500,13 +500,13 @@
 
     // Update Server Dropdown and Label
     const serverNames = {
-      'multiembed': 'Español Latino',
-      'smashy': 'Ultra Rápido HD',
-      'vidsrc': 'Original + Subs',
-      '2embed': 'Respaldo'
+      'vidsrc': 'Servidor 1 (Ultra HD)',
+      'multiembed': 'Servidor 2 (Latino)',
+      '2embed': 'Servidor 3 (Respaldo)',
+      'smashy': 'Servidor 4 (Opcional)'
     };
     if (currentServerLabel) {
-      currentServerLabel.textContent = serverNames[state.currentServer] || 'Español Latino';
+      currentServerLabel.textContent = serverNames[state.currentServer] || 'Servidor 1 (Ultra HD)';
     }
     document.querySelectorAll('.server-menu-item').forEach(m => {
       m.classList.toggle('active', m.dataset.server === state.currentServer);
@@ -746,10 +746,10 @@
         item.classList.add('active');
 
         const serverNames = {
-          'multiembed': 'Español Latino',
-          'smashy': 'Ultra Rápido HD',
-          'vidsrc': 'Original + Subs',
-          '2embed': 'Respaldo'
+          'vidsrc': 'Servidor 1 (Ultra HD)',
+          'multiembed': 'Servidor 2 (Latino)',
+          '2embed': 'Servidor 3 (Respaldo)',
+          'smashy': 'Servidor 4 (Opcional)'
         };
         if (currentServerLabel) {
           currentServerLabel.textContent = serverNames[serverKey] || 'Servidor';

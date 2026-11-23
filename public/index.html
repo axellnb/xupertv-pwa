@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/style.css?v=3.6">
+  <link rel="stylesheet" href="/style.css?v=3.7">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -355,13 +355,13 @@
           <div class="player-top-actions">
             <div class="server-dropdown-wrapper">
               <button class="server-menu-btn" id="serverMenuBtn" aria-label="Seleccionar Audio y Servidor">
-                <span id="currentServerLabel">Español Latino</span> ▾
+                <span id="currentServerLabel">Servidor 1 (Ultra HD)</span> ▾
               </button>
               <div class="server-dropdown-menu" id="serverDropdownMenu">
-                <button class="server-menu-item active" data-server="multiembed">Audio Español Latino (MultiEmbed)</button>
-                <button class="server-menu-item" data-server="smashy">Ultra Rápido HD (SmashyStream)</button>
-                <button class="server-menu-item" data-server="vidsrc">Original Inglés / Subtítulos (VidSrc)</button>
-                <button class="server-menu-item" data-server="2embed">Servidor de Respaldo (2Embed)</button>
+                <button class="server-menu-item active" data-server="vidsrc">Servidor 1: Ultra HD Estable (VidSrc)</button>
+                <button class="server-menu-item" data-server="multiembed">Servidor 2: Audio Latino (MultiEmbed)</button>
+                <button class="server-menu-item" data-server="2embed">Servidor 3: Respaldo HD (2Embed)</button>
+                <button class="server-menu-item" data-server="smashy">Servidor 4: Opcional (Smashy)</button>
               </div>
             </div>
             <button class="overlay-circle-btn" id="closePlayerIconBtn" aria-label="Cerrar">
@@ -379,6 +379,6 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast"></div>
 
-  <script src="/app.js?v=3.6"></script>
+  <script src="/app.js?v=3.7"></script>
 </body>
 </html>
