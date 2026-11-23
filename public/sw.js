@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xupertv-cache-v3';
+const CACHE_NAME = 'xupertv-cache-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -13,10 +13,10 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
@@ -27,29 +27,31 @@ self.addEventListener('activate', (e) => {
           if (k !== CACHE_NAME) return caches.delete(k);
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
+// Network-first strategy: always fetch the latest version from network
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // Bypass API calls or torrent stream fetching
+  // Bypass API calls
   if (url.pathname.startsWith('/api/')) {
     return;
   }
 
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      return cached || fetch(e.request).then((resp) => {
-        // Cache images or static assets dynamically if valid
-        if (resp && resp.status === 200 && (url.pathname.endsWith('.jpg') || url.pathname.endsWith('.png'))) {
-          const respClone = resp.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, respClone));
+    fetch(e.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseToCache);
+          });
         }
-        return resp;
-      }).catch(() => cached);
-    })
+        return networkResponse;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
+
