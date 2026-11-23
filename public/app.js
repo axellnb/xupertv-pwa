@@ -57,6 +57,8 @@
   const favBtnLabel = document.getElementById('favBtnLabel');
   const quickPlayBtn = document.getElementById('quickPlayBtn');
   const openInStremioQuickBtn = document.getElementById('openInStremioQuickBtn');
+  const openInVlcQuickBtn = document.getElementById('openInVlcQuickBtn');
+  const appContainer = document.getElementById('app');
   const seriesControls = document.getElementById('seriesControls');
   const seasonSelect = document.getElementById('seasonSelect');
   const episodeSelect = document.getElementById('episodeSelect');
@@ -64,10 +66,16 @@
 
   // Player
   const playerDialog = document.getElementById('playerDialog');
+  const playerContainer = document.getElementById('playerContainer');
+  const playerOverlay = document.getElementById('playerOverlay');
   const closePlayerBtn = document.getElementById('closePlayerBtn');
   const closePlayerIconBtn = document.getElementById('closePlayerIconBtn');
   const playerIframe = document.getElementById('playerIframe');
   const playerStreamTitle = document.getElementById('playerStreamTitle');
+  const serverMenuBtn = document.getElementById('serverMenuBtn');
+  const currentServerLabel = document.getElementById('currentServerLabel');
+  const serverDropdownMenu = document.getElementById('serverDropdownMenu');
+  const playerFullscreenBtn = document.getElementById('playerFullscreenBtn');
   const playerExtVlcBtn = document.getElementById('playerExtVlcBtn');
   const playerExtStremioBtn = document.getElementById('playerExtStremioBtn');
   const toast = document.getElementById('toast');
@@ -422,6 +430,31 @@
     }
   }
 
+  // Quick launch in VLC / Outplayer
+  function triggerVlcLaunch() {
+    const firstStreamCard = streamsList.querySelector('.stream-card');
+    if (firstStreamCard) {
+      const vlcBtn = firstStreamCard.querySelector('.open-vlc-btn');
+      if (vlcBtn) {
+        vlcBtn.click();
+        return;
+      }
+    }
+    showToast('Buscando enlaces para VLC...');
+  }
+
+  // Floating Cinema Overlay Auto-Hide Controller
+  let overlayTimer = null;
+  function showOverlay() {
+    if (!playerOverlay) return;
+    playerOverlay.classList.remove('hidden');
+    clearTimeout(overlayTimer);
+    overlayTimer = setTimeout(() => {
+      if (serverDropdownMenu && serverDropdownMenu.classList.contains('show')) return;
+      playerOverlay.classList.add('hidden');
+    }, 3500);
+  }
+
   // In-App Web Video Streaming Logic (Instant Multi-Server Playback)
   function openWebPlayer(item, type, season = 1, episode = 1) {
     if (!item) return;
@@ -440,42 +473,46 @@
     };
 
     playerExtVlcBtn.onclick = () => {
-      const firstStreamCard = streamsList.querySelector('.stream-card');
-      if (firstStreamCard) {
-        const vlcBtn = firstStreamCard.querySelector('.open-vlc-btn');
-        if (vlcBtn) vlcBtn.click();
-      } else {
-        showToast('Abriendo reproductor...');
-      }
+      triggerVlcLaunch();
     };
 
-    // Set Server Pill States
-    document.querySelectorAll('.server-pill').forEach(pill => {
-      if (pill.dataset.server === state.currentServer) {
-        pill.classList.add('active');
-      } else {
-        pill.classList.remove('active');
-      }
-
-      pill.onclick = () => {
-        document.querySelectorAll('.server-pill').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        state.currentServer = pill.dataset.server;
-        playerIframe.src = getEmbedUrl(item, type, state.currentSeason, state.currentEpisode, state.currentServer);
-      };
+    // Update Server Dropdown and Label
+    const serverNames = {
+      'multiembed': 'Servidor 1',
+      'smashy': 'Servidor 2',
+      'vidsrc': 'Servidor 3',
+      '2embed': 'Servidor 4'
+    };
+    if (currentServerLabel) {
+      currentServerLabel.textContent = serverNames[state.currentServer] || 'Servidor 1';
+    }
+    document.querySelectorAll('.server-menu-item').forEach(m => {
+      m.classList.toggle('active', m.dataset.server === state.currentServer);
     });
 
     const embedUrl = getEmbedUrl(item, type, season, episode, state.currentServer);
     playerIframe.src = embedUrl;
 
+    // Completely hide the background app DOM so mobile Safari CANNOT slide or scroll behind the video!
+    if (appContainer) {
+      appContainer.style.display = 'none';
+    }
     document.body.classList.add('player-open');
     requestWakeLock();
     playerDialog.showModal();
+    showOverlay();
   }
 
   // Close Player
   function closePlayer() {
     releaseWakeLock();
+    if (overlayTimer) clearTimeout(overlayTimer);
+    if (serverDropdownMenu) serverDropdownMenu.classList.remove('show');
+    
+    // Restore background app DOM
+    if (appContainer) {
+      appContainer.style.display = '';
+    }
     document.body.classList.remove('player-open');
     playerIframe.src = 'about:blank';
     playerDialog.close();
@@ -637,22 +674,21 @@
   });
   closeDetailBtn.addEventListener('click', () => detailDialog.close());
 
-  playerDialog.addEventListener('close', () => {
-    document.body.classList.remove('player-open');
-    releaseWakeLock();
-  });
+  playerDialog.addEventListener('close', closePlayer);
   closePlayerBtn.addEventListener('click', closePlayer);
   if (closePlayerIconBtn) closePlayerIconBtn.addEventListener('click', closePlayer);
 
-  const playerFullscreenBtn = document.getElementById('playerFullscreenBtn');
+  // Fullscreen Button Logic with Mobile Safari Fallback
   if (playerFullscreenBtn) {
     playerFullscreenBtn.addEventListener('click', () => {
-      const elem = playerDialog;
+      const elem = document.documentElement;
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         if (elem.requestFullscreen) {
           elem.requestFullscreen().catch(() => {});
         } else if (elem.webkitRequestFullscreen) {
           elem.webkitRequestFullscreen();
+        } else {
+          showToast('Gira el teléfono en horizontal');
         }
       } else {
         if (document.exitFullscreen) {
@@ -663,6 +699,78 @@
       }
     });
   }
+
+  // Floating Cinema Overlay Interactions
+  if (playerContainer) {
+    playerContainer.addEventListener('mousemove', showOverlay);
+    playerContainer.addEventListener('touchstart', showOverlay, { passive: true });
+    playerContainer.addEventListener('click', showOverlay);
+  }
+
+  // Server Dropdown Menu Controller
+  if (serverMenuBtn && serverDropdownMenu) {
+    serverMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      serverDropdownMenu.classList.toggle('show');
+      showOverlay();
+    });
+
+    document.querySelectorAll('.server-menu-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const serverKey = item.dataset.server;
+        state.currentServer = serverKey;
+        document.querySelectorAll('.server-menu-item').forEach(m => m.classList.remove('active'));
+        item.classList.add('active');
+
+        const serverNames = {
+          'multiembed': 'Servidor 1',
+          'smashy': 'Servidor 2',
+          'vidsrc': 'Servidor 3',
+          '2embed': 'Servidor 4'
+        };
+        if (currentServerLabel) {
+          currentServerLabel.textContent = serverNames[serverKey] || 'Servidor';
+        }
+
+        serverDropdownMenu.classList.remove('show');
+        if (state.activeItem) {
+          playerIframe.src = getEmbedUrl(state.activeItem, state.activeType, state.currentSeason, state.currentEpisode, state.currentServer);
+        }
+        showOverlay();
+      });
+    });
+
+    document.addEventListener('click', () => {
+      if (serverDropdownMenu) serverDropdownMenu.classList.remove('show');
+    });
+  }
+
+  // External Quick Launch Buttons in Detail Dialog
+  if (openInStremioQuickBtn) {
+    openInStremioQuickBtn.addEventListener('click', () => {
+      if (!state.activeItem) return;
+      const queryId = state.activeItem.imdb_id || state.activeItem.id;
+      window.location.href = `stremio:///detail/${state.activeType}/${queryId}`;
+    });
+  }
+
+  if (openInVlcQuickBtn) {
+    openInVlcQuickBtn.addEventListener('click', triggerVlcLaunch);
+  }
+
+  // Screen WakeLock Recovery on Visibility / Rotation
+  document.addEventListener('visibilitychange', () => {
+    if (playerDialog.open && document.visibilityState === 'visible') {
+      requestWakeLock();
+    }
+  });
+
+  window.addEventListener('orientationchange', () => {
+    if (playerDialog.open) {
+      requestWakeLock();
+    }
+  });
 
   // Carousel Arrow Controls
   document.querySelectorAll('.carousel-arrow').forEach(arrow => {

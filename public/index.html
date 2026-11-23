@@ -6,7 +6,7 @@
   <title>XuperTV</title>
   
   <!-- PWA & Mobile Meta Tags -->
-  <meta name="theme-color" content="#0e0f14">
+  <meta name="theme-color" content="#000000">
   <meta name="description" content="Streaming de películas y series con catálogo XuperTV y motor Stremio">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/style.css?v=3.1">
+  <link rel="stylesheet" href="/style.css?v=3.3">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -30,7 +30,7 @@
       <div class="brand" id="brandHomeBtn" role="button" tabindex="0" title="Volver al inicio">
         <div class="brand-logo">
           <svg viewBox="0 0 512 512" width="24" height="24">
-            <path d="M192 144 L384 256 L192 368 Z" fill="#7b5bf5"/>
+            <path d="M192 144 L384 256 L192 368 Z" fill="#e50914"/>
           </svg>
         </div>
         <span class="brand-name">Xuper<span>TV</span></span>
@@ -273,17 +273,23 @@
               Reproducir
             </button>
             <div class="dialog-secondary-actions">
+              <button class="btn btn-secondary" id="openInStremioQuickBtn" title="Abrir en App de Stremio">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Stremio
+              </button>
+              <button class="btn btn-secondary" id="openInVlcQuickBtn" title="Abrir en VLC o Outplayer">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                VLC
+              </button>
               <button class="btn btn-secondary" id="dialogFavBtn">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                 </svg>
                 <span id="favBtnLabel">Mi Lista</span>
-              </button>
-              <button class="btn btn-secondary" id="openInStremioQuickBtn">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                Stremio
               </button>
             </div>
           </div>
@@ -317,70 +323,75 @@
         </div>
       </div>
     </dialog>
-
-    <!-- In-App Cinema Video Player Dialog -->
-    <dialog id="playerDialog" class="player-dialog">
-      <div class="player-container">
-        <!-- Responsive Player Header -->
-        <div class="player-header">
-          <div class="player-header-top">
-            <button class="player-back-btn" id="closePlayerBtn" aria-label="Volver">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-              <span>Volver</span>
-            </button>
-            
-            <span class="player-stream-title" id="playerStreamTitle">Reproduciendo</span>
-            
-            <div class="player-top-actions">
-              <button class="player-icon-btn" id="playerFullscreenBtn" title="Pantalla Completa" aria-label="Pantalla Completa">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                </svg>
-              </button>
-              <button class="player-icon-btn" id="closePlayerIconBtn" aria-label="Cerrar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Sub-bar for server switcher & external player launchers -->
-          <div class="player-header-bottom">
-            <div class="player-server-pills">
-              <button class="server-pill active" data-server="multiembed">Servidor 1</button>
-              <button class="server-pill" data-server="smashy">Servidor 2</button>
-              <button class="server-pill" data-server="vidsrc">Servidor 3</button>
-              <button class="server-pill" data-server="2embed">Servidor 4</button>
-            </div>
-            
-            <div class="player-ext-actions">
-              <button class="btn-pill" id="playerExtStremioBtn">Stremio</button>
-              <button class="btn-pill" id="playerExtVlcBtn">VLC</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Video Iframe -->
-        <div class="video-wrapper">
-          <iframe id="playerIframe"
-                  src=""
-                  allowfullscreen
-                  allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                  referrerpolicy="origin"
-                  class="player-iframe">
-          </iframe>
-        </div>
-      </div>
-    </dialog>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast"></div>
   </div>
 
-  <script src="/app.js?v=3.1"></script>
+  <!-- In-App Cinema Video Player Dialog (Detached from App DOM to prevent background scrolling) -->
+  <dialog id="playerDialog" class="player-dialog">
+    <div class="player-container" id="playerContainer">
+      <!-- Full-bleed Video Iframe -->
+      <div class="video-wrapper">
+        <iframe id="playerIframe"
+                src=""
+                allowfullscreen="true"
+                webkitallowfullscreen="true"
+                mozallowfullscreen="true"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; webkit-playsinline"
+                referrerpolicy="origin"
+                class="player-iframe">
+        </iframe>
+      </div>
+
+      <!-- Floating Auto-Hiding Cinema Overlay -->
+      <div class="player-overlay" id="playerOverlay">
+        <div class="player-overlay-top">
+          <button class="overlay-circle-btn" id="closePlayerBtn" aria-label="Volver">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          
+          <span class="player-stream-title" id="playerStreamTitle">Reproduciendo</span>
+
+          <div class="player-top-actions">
+            <div class="server-dropdown-wrapper">
+              <button class="server-menu-btn" id="serverMenuBtn" aria-label="Seleccionar Servidor">
+                <span id="currentServerLabel">Servidor 1</span> ▾
+              </button>
+              <div class="server-dropdown-menu" id="serverDropdownMenu">
+                <button class="server-menu-item active" data-server="multiembed">Servidor 1 (Latino / Multi)</button>
+                <button class="server-menu-item" data-server="smashy">Servidor 2 (Rápido HD)</button>
+                <button class="server-menu-item" data-server="vidsrc">Servidor 3 (Alternativo)</button>
+                <button class="server-menu-item" data-server="2embed">Servidor 4 (Respaldo)</button>
+              </div>
+            </div>
+            <button class="overlay-circle-btn" id="playerFullscreenBtn" title="Pantalla Completa" aria-label="Pantalla Completa">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+              </svg>
+            </button>
+            <button class="overlay-circle-btn" id="closePlayerIconBtn" aria-label="Cerrar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bottom floating action pills -->
+        <div class="player-overlay-bottom">
+          <div class="player-ext-actions">
+            <button class="btn-pill" id="playerExtStremioBtn">Abrir en Stremio</button>
+            <button class="btn-pill" id="playerExtVlcBtn">Abrir en VLC</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <script src="/app.js?v=3.3"></script>
 </body>
 </html>
