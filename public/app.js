@@ -54,6 +54,8 @@
   const dialogGenres = document.getElementById('dialogGenres');
   const dialogOverview = document.getElementById('dialogOverview');
   const dialogFavBtn = document.getElementById('dialogFavBtn');
+  const quickPlayBtn = document.getElementById('quickPlayBtn');
+  const openInStremioQuickBtn = document.getElementById('openInStremioQuickBtn');
   const seriesControls = document.getElementById('seriesControls');
   const seasonSelect = document.getElementById('seasonSelect');
   const episodeSelect = document.getElementById('episodeSelect');
@@ -62,13 +64,10 @@
   // Player
   const playerDialog = document.getElementById('playerDialog');
   const closePlayerBtn = document.getElementById('closePlayerBtn');
-  const videoElement = document.getElementById('videoElement');
+  const playerIframe = document.getElementById('playerIframe');
+  const playerServerSelect = document.getElementById('playerServerSelect');
   const playerStreamTitle = document.getElementById('playerStreamTitle');
   const playerLoader = document.getElementById('playerLoader');
-  const loaderStats = document.getElementById('loaderStats');
-  const speedMetric = document.getElementById('speedMetric');
-  const peersMetric = document.getElementById('peersMetric');
-  const progressMetric = document.getElementById('progressMetric');
   const playerExtVlcBtn = document.getElementById('playerExtVlcBtn');
   const playerExtStremioBtn = document.getElementById('playerExtStremioBtn');
   const toast = document.getElementById('toast');
@@ -150,7 +149,7 @@
     heroRating.textContent = `⭐ ${item.rating || 'N/A'}`;
     heroYear.textContent = item.releaseYear || '';
 
-    heroPlayBtn.onclick = () => openDetail(item, typeLabel);
+    heroPlayBtn.onclick = () => openWebPlayer(item, typeLabel, 1, 1);
     heroInfoBtn.onclick = () => openDetail(item, typeLabel);
   }
 
@@ -209,6 +208,19 @@
 
     // Update Favorite Button State
     updateFavButton();
+
+    // Quick Play & Stremio Buttons
+    if (quickPlayBtn) {
+      quickPlayBtn.onclick = () => {
+        openWebPlayer(state.activeItem, state.activeType, state.currentSeason, state.currentEpisode);
+      };
+    }
+    if (openInStremioQuickBtn) {
+      openInStremioQuickBtn.onclick = () => {
+        const queryId = state.activeItem.imdb_id || state.activeItem.id;
+        window.location.href = `stremio:///detail/${state.activeType}/${queryId}`;
+      };
+    }
 
     // Series controls
     if (state.activeType === 'series') {
@@ -339,7 +351,9 @@
       const stremioBtn = card.querySelector('.open-stremio-btn');
       const copyBtn = card.querySelector('.copy-magnet-btn');
 
-      playBtn.onclick = () => startStreaming(stream);
+      playBtn.onclick = () => {
+        openWebPlayer(state.activeItem, state.activeType, state.currentSeason, state.currentEpisode);
+      };
 
       vlcBtn.onclick = () => {
         if (!magnetUrl) {
@@ -374,105 +388,69 @@
     });
   }
 
-  // In-App Video Streaming Logic (WebTorrent + HTML5 Video)
-  function startStreaming(stream) {
-    const magnetUrl = stream.magnet;
-    if (!magnetUrl) {
-      showToast('Enlace no disponible para reproducción directa');
-      return;
+  // Get Embed Player URL for High-Speed Streaming
+  function getEmbedUrl(item, type, season = 1, episode = 1, server = 'vidsrc') {
+    const imdbId = item.imdb_id || item.id;
+    if (type === 'movie') {
+      if (server === 'vidsrc') return `https://vidsrc.sh/embed/movie?imdb=${imdbId}`;
+      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId}`;
+      if (server === '2embed') return `https://www.2embed.cc/embed/${imdbId}`;
+      return `https://vidsrc.sh/embed/movie?imdb=${imdbId}`;
+    } else {
+      if (server === 'vidsrc') return `https://vidsrc.sh/embed/tv?imdb=${imdbId}&season=${season}&episode=${episode}`;
+      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId}&s=${season}&e=${episode}`;
+      if (server === '2embed') return `https://www.2embed.cc/embedtv/${imdbId}&s=${season}&e=${episode}`;
+      return `https://vidsrc.sh/embed/tv?imdb=${imdbId}&season=${season}&episode=${episode}`;
     }
+  }
 
-    // Prepare Player Dialog
-    playerStreamTitle.textContent = `${state.activeItem.title} (${stream.quality || 'HD'})`;
-    playerLoader.style.display = 'block';
-    playerLoaderText = document.getElementById('playerLoaderText');
-    playerLoaderText.textContent = 'Buscando enjambre P2P y descargando metadatos...';
-    loaderStats.textContent = 'Conectando a rastreadores de XuperTV...';
-    speedMetric.textContent = '0 KB/s';
-    peersMetric.textContent = '0';
-    progressMetric.textContent = '0%';
+  // In-App Web Video Streaming Logic (Instant Multi-Server Playback)
+  function openWebPlayer(item, type, season = 1, episode = 1) {
+    if (!item) return;
+    state.activeItem = item;
+    state.activeType = type;
+    state.currentSeason = season;
+    state.currentEpisode = episode;
+
+    const seasonEpText = type === 'series' ? ` · Temporada ${season} - Episodio ${episode}` : '';
+    playerStreamTitle.textContent = `${item.title}${seasonEpText}`;
 
     // Configure External Links
-    playerExtVlcBtn.onclick = () => {
-      window.location.href = `vlc-x-callback://x-callback-url/stream?url=${encodeURIComponent(magnetUrl)}`;
-    };
+    const queryId = item.imdb_id || item.id;
     playerExtStremioBtn.onclick = () => {
-      window.location.href = `stremio:///detail/${state.activeType}/${state.activeItem.imdb_id || state.activeItem.id}`;
+      window.location.href = `stremio:///detail/${type}/${queryId}`;
     };
+
+    playerExtVlcBtn.onclick = () => {
+      // Find top magnet if available
+      const firstStreamCard = streamsList.querySelector('.stream-card');
+      if (firstStreamCard) {
+        const vlcBtn = firstStreamCard.querySelector('.open-vlc-btn');
+        if (vlcBtn) vlcBtn.click();
+      } else {
+        showToast('Abriendo enlace de streaming...');
+      }
+    };
+
+    // Configure Server Selector
+    const currentServer = (playerServerSelect && playerServerSelect.value) || 'vidsrc';
+    const embedUrl = getEmbedUrl(item, type, season, episode, currentServer);
+
+    playerIframe.src = embedUrl;
+
+    if (playerServerSelect) {
+      playerServerSelect.onchange = (e) => {
+        const newServer = e.target.value;
+        playerIframe.src = getEmbedUrl(item, type, state.currentSeason, state.currentEpisode, newServer);
+      };
+    }
 
     playerDialog.showModal();
-
-    // Reset previous torrent
-    if (state.activeTorrent) {
-      try {
-        state.activeTorrent.destroy();
-      } catch (e) {}
-      state.activeTorrent = null;
-    }
-
-    if (!state.wtClient) {
-      loaderStats.textContent = 'WebTorrent no compatible con este navegador. Usa el botón "Abrir en VLC".';
-      return;
-    }
-
-    try {
-      state.wtClient.add(magnetUrl, (torrent) => {
-        state.activeTorrent = torrent;
-
-        // Find video file
-        const videoFile = torrent.files.find(f => {
-          const name = f.name.toLowerCase();
-          return name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.webm') || name.endsWith('.avi');
-        }) || torrent.files[0];
-
-        if (videoFile) {
-          loaderStats.textContent = `Archivo: ${videoFile.name} (${(videoFile.length / 1024 / 1024).toFixed(0)} MB)`;
-          
-          videoFile.renderTo(videoElement, {
-            autoplay: true,
-            controls: true
-          }, (err) => {
-            if (err) {
-              console.warn('Render error:', err);
-              loaderStats.textContent = 'Formato de video requiere reproductor externo (VLC / Outplayer).';
-            } else {
-              playerLoader.style.display = 'none';
-            }
-          });
-        }
-
-        // Live Torrent Progress Listener
-        torrent.on('download', () => {
-          const speed = (torrent.downloadSpeed / 1024 / 1024).toFixed(2);
-          const peers = torrent.numPeers;
-          const prog = (torrent.progress * 100).toFixed(1);
-
-          speedMetric.textContent = `${speed} MB/s`;
-          peersMetric.textContent = peers;
-          progressMetric.textContent = `${prog}%`;
-
-          if (videoElement.currentTime > 0) {
-            playerLoader.style.display = 'none';
-          }
-        });
-      });
-    } catch (err) {
-      console.error('Torrent add error:', err);
-      loaderStats.textContent = 'Error al procesar el stream. Usa "Abrir en VLC".';
-    }
   }
 
   // Close Player
   function closePlayer() {
-    if (state.activeTorrent) {
-      try {
-        state.activeTorrent.destroy();
-      } catch (e) {}
-      state.activeTorrent = null;
-    }
-    videoElement.pause();
-    videoElement.removeAttribute('src');
-    videoElement.load();
+    playerIframe.src = 'about:blank';
     playerDialog.close();
   }
 

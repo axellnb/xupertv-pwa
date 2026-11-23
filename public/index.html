@@ -202,6 +202,19 @@
         </div>
 
         <div class="dialog-body">
+          <!-- Quick Play Web Stream Button -->
+          <div class="dialog-quick-actions">
+            <button class="btn btn-primary btn-lg" id="quickPlayBtn">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              ▶️ REPRODUCIR AHORA (Servidor Web)
+            </button>
+            <button class="btn btn-secondary" id="openInStremioQuickBtn">
+              🎬 Abrir en Stremio
+            </button>
+          </div>
+
           <!-- Series Episode Controls -->
           <div class="series-controls" id="seriesControls" style="display: none;">
             <div class="control-group">
@@ -217,7 +230,7 @@
           <!-- Stream Options Container -->
           <div class="streams-section">
             <div class="streams-header">
-              <h3 class="streams-title">⚡ Enlaces de Streaming Disponibles</h3>
+              <h3 class="streams-title">⚡ Enlaces de Streaming & Torrents</h3>
               <span class="streams-subtitle">Prioridad Español Latino & 1080p/4K</span>
             </div>
             
@@ -244,7 +257,14 @@
           </button>
           <div class="player-title-info">
             <span class="player-stream-title" id="playerStreamTitle">Reproduciendo...</span>
-            <span class="player-stream-subtitle" id="playerStreamSubtitle">XuperTV Stream Engine</span>
+            <div class="player-server-selector">
+              <label for="playerServerSelect">Servidor:</label>
+              <select id="playerServerSelect" class="stremio-select">
+                <option value="vidsrc">Servidor 1 (Ultra Rápido HD)</option>
+                <option value="multiembed">Servidor 2 (Multi-Audio)</option>
+                <option value="2embed">Servidor 3 (Alternativo)</option>
+              </select>
+            </div>
           </div>
           <div class="player-actions">
             <button class="btn btn-xs btn-outline" id="playerExtVlcBtn">Abrir en VLC</button>
@@ -253,22 +273,22 @@
         </div>
 
         <div class="video-wrapper">
-          <video id="videoElement" controls playsinline autoplay></video>
-          <div class="player-loader" id="playerLoader">
+          <iframe id="playerIframe"
+                  src=""
+                  allowfullscreen
+                  allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                  referrerpolicy="origin"
+                  class="player-iframe">
+          </iframe>
+          <div class="player-loader" id="playerLoader" style="display: none;">
             <div class="spinner large"></div>
-            <p id="playerLoaderText">Iniciando streaming P2P / WebTorrent...</p>
-            <div class="loader-stats" id="loaderStats">Conectando a rastreadores de XuperTV...</div>
+            <p id="playerLoaderText">Cargando reproductor de video...</p>
           </div>
         </div>
 
         <div class="player-footer">
-          <div class="p2p-metrics" id="p2pMetrics">
-            <span>⚡ Velocidad: <strong id="speedMetric">0 KB/s</strong></span>
-            <span>👥 Semillas: <strong id="peersMetric">0</strong></span>
-            <span>📊 Progreso: <strong id="progressMetric">0%</strong></span>
-          </div>
           <div class="player-notice">
-            💡 En iOS/iPadOS o Smart TV, también puedes usar "Abrir en VLC / Outplayer" o AirPlay para la mejor aceleración por hardware.
+            💡 Puedes cambiar de servidor arriba si el video tarda en cargar. En iOS/iPadOS o Smart TV, también puedes usar "Abrir en VLC / Outplayer" o AirPlay.
           </div>
         </div>
       </div>

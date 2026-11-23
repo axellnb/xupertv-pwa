@@ -321,6 +321,41 @@ body {
   font-size: 0.85rem;
 }
 
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px var(--primary-glow);
+}
+
+.dialog-quick-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.player-server-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.player-server-selector label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.player-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #000;
+  display: block;
+}
+
 .btn-xs {
   padding: 4px 10px;
   font-size: 0.78rem;
