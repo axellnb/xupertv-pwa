@@ -9,7 +9,7 @@
     activeType: 'movie',
     currentSeason: 1,
     currentEpisode: 1,
-    currentServer: 'vidsrc',
+    currentServer: 'multiembed',
     searchDebounce: null,
   };
 
@@ -331,12 +331,12 @@
             <span class="stream-lang-tag">${langText}</span>
             ${seedsText ? `<span class="stream-seeds-tag">${seedsText}</span>` : ''}
           </div>
-          <div class="stream-filename">${stream.title ? stream.title.replace(/\n/g, ' ') : `Fuente ${idx + 1}`}</div>
+          <div class="stream-filename">Fuente ${idx + 1} &middot; ${quality}</div>
         </div>
         <div class="stream-actions">
-          <button class="btn btn-sm btn-primary play-stream-btn">Reproducir</button>
-          <button class="btn btn-sm btn-outline open-vlc-btn" title="Abrir en VLC o Outplayer">VLC</button>
+          <button class="btn btn-sm btn-primary play-stream-btn">Ver</button>
           <button class="btn btn-sm btn-outline open-stremio-btn" title="Abrir en Stremio">Stremio</button>
+          <button class="btn btn-sm btn-outline open-vlc-btn" title="Abrir en VLC">VLC</button>
           <button class="btn btn-sm btn-outline copy-magnet-btn" title="Copiar Magnet">Copiar</button>
         </div>
       `;
@@ -382,19 +382,23 @@
     });
   }
 
-  // Get Embed Player URL for High-Speed Streaming
-  function getEmbedUrl(item, type, season = 1, episode = 1, server = 'vidsrc') {
+  // Get Embed Player URL for High-Speed Streaming (Reliable Multi-Server)
+  function getEmbedUrl(item, type, season = 1, episode = 1, server = 'multiembed') {
     const imdbId = item.imdb_id || item.id;
+    const tmdbId = item.id.replace(/^(mov_|tv_)/, '');
+
     if (type === 'movie') {
+      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&tmdb=1`;
+      if (server === 'smashy') return `https://player.smashystream.com/movie/${imdbId || tmdbId}`;
       if (server === 'vidsrc') return `https://vidsrc.sh/embed/movie?imdb=${imdbId}`;
-      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId}`;
       if (server === '2embed') return `https://www.2embed.cc/embed/${imdbId}`;
-      return `https://vidsrc.sh/embed/movie?imdb=${imdbId}`;
+      return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&tmdb=1`;
     } else {
+      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&s=${season}&e=${episode}`;
+      if (server === 'smashy') return `https://player.smashystream.com/tv/${imdbId || tmdbId}?s=${season}&e=${episode}`;
       if (server === 'vidsrc') return `https://vidsrc.sh/embed/tv?imdb=${imdbId}&season=${season}&episode=${episode}`;
-      if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId}&s=${season}&e=${episode}`;
       if (server === '2embed') return `https://www.2embed.cc/embedtv/${imdbId}&s=${season}&e=${episode}`;
-      return `https://vidsrc.sh/embed/tv?imdb=${imdbId}&season=${season}&episode=${episode}`;
+      return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&s=${season}&e=${episode}`;
     }
   }
 

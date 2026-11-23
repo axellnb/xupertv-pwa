@@ -81,9 +81,8 @@ export default async function handler(req, res) {
     const top = scored.slice(0, 5);
 
     const streams = top.map(({ s, isSpanish, seeds, quality }, idx) => {
-      const langLabel = isSpanish ? 'Español Latino / Multi' : 'Inglés + Sub';
-      const seedLabel = seeds > 0 ? ` · ⚡ ${seeds} semillas` : '';
-      const cleanTitle = s.title ? s.title.split('\n')[0] : `XuperTV Stream ${idx + 1}`;
+      const langLabel = isSpanish ? 'Español Latino' : 'Multi-Audio';
+      const cleanTitle = s.title ? s.title.split('\n')[0].replace(/[\[\]]/g, '').slice(0, 40) : `Servidor ${idx + 1}`;
 
       let magnet = null;
       if (s.infoHash) {
@@ -103,8 +102,8 @@ export default async function handler(req, res) {
         quality,
         isSpanish,
         seeds,
-        name: `XuperTV (${quality})`,
-        title: `[XuperTV] Opción ${idx + 1} (${quality}) [${langLabel}]${seedLabel}\n${cleanTitle}`,
+        name: `Calidad ${quality}`,
+        title: `Opción ${idx + 1} (${quality}) - ${langLabel}`,
         sources: streamSources
       };
     });
