@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/style.css?v=3.4">
+  <link rel="stylesheet" href="/style.css?v=3.5">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -328,7 +328,7 @@
   <!-- In-App Cinema Video Player Dialog (Detached from App DOM to prevent background scrolling) -->
   <dialog id="playerDialog" class="player-dialog">
     <div class="player-container" id="playerContainer">
-      <!-- Full-bleed Video Iframe with popup sandbox restriction -->
+      <!-- Full-bleed Video Iframe -->
       <div class="video-wrapper">
         <iframe id="playerIframe"
                 src=""
@@ -337,7 +337,6 @@
                 mozallowfullscreen="true"
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media; webkit-playsinline"
                 referrerpolicy="origin"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
                 class="player-iframe">
         </iframe>
       </div>
@@ -359,10 +358,10 @@
                 <span id="currentServerLabel">Servidor 1</span> ▾
               </button>
               <div class="server-dropdown-menu" id="serverDropdownMenu">
-                <button class="server-menu-item active" data-server="vidlink">Servidor 1 (HD · Selector 1080p/720p)</button>
-                <button class="server-menu-item" data-server="smashy">Servidor 2 (Rápido HD)</button>
-                <button class="server-menu-item" data-server="multiembed">Servidor 3 (Audio Latino)</button>
-                <button class="server-menu-item" data-server="vidsrc">Servidor 4 (Alternativo)</button>
+                <button class="server-menu-item active" data-server="smashy">Servidor 1 (Ultra Rápido HD · 1080p)</button>
+                <button class="server-menu-item" data-server="multiembed">Servidor 2 (Audio Latino / Multi)</button>
+                <button class="server-menu-item" data-server="vidsrc">Servidor 3 (Alternativo HD)</button>
+                <button class="server-menu-item" data-server="2embed">Servidor 4 (Respaldo)</button>
               </div>
             </div>
             <button class="overlay-circle-btn" id="playerFullscreenBtn" title="Pantalla Completa" aria-label="Pantalla Completa">
@@ -378,14 +377,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Bottom floating action pills -->
-        <div class="player-overlay-bottom">
-          <div class="player-ext-actions">
-            <button class="btn-pill" id="playerExtStremioBtn">Abrir en Stremio</button>
-            <button class="btn-pill" id="playerExtVlcBtn">Abrir en VLC</button>
-          </div>
-        </div>
       </div>
     </div>
   </dialog>
@@ -393,6 +384,6 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast"></div>
 
-  <script src="/app.js?v=3.4"></script>
+  <script src="/app.js?v=3.5"></script>
 </body>
 </html>

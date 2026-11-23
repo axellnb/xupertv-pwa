@@ -9,7 +9,7 @@
     activeType: 'movie',
     currentSeason: 1,
     currentEpisode: 1,
-    currentServer: 'vidlink',
+    currentServer: 'smashy',
     searchDebounce: null,
   };
 
@@ -429,22 +429,22 @@
   }
 
   // Get Embed Player URL for High-Speed Streaming (Reliable Multi-Server)
-  function getEmbedUrl(item, type, season = 1, episode = 1, server = 'vidlink') {
+  function getEmbedUrl(item, type, season = 1, episode = 1, server = 'smashy') {
     const imdbId = item.imdb_id || item.id;
     const tmdbId = item.id.replace(/^(mov_|tv_)/, '');
 
     if (type === 'movie') {
-      if (server === 'vidlink') return `https://vidlink.pro/movie/${tmdbId}?primaryColor=e50914&secondaryColor=141414&iconColor=ffffff&autoplay=true`;
       if (server === 'smashy') return `https://player.smashystream.com/movie/${imdbId || tmdbId}`;
       if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&tmdb=1`;
       if (server === 'vidsrc') return `https://vidsrc.sh/embed/movie?imdb=${imdbId}`;
-      return `https://vidlink.pro/movie/${tmdbId}?primaryColor=e50914&secondaryColor=141414&iconColor=ffffff&autoplay=true`;
+      if (server === '2embed') return `https://www.2embed.cc/embed/${imdbId}`;
+      return `https://player.smashystream.com/movie/${imdbId || tmdbId}`;
     } else {
-      if (server === 'vidlink') return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}?primaryColor=e50914&secondaryColor=141414&iconColor=ffffff&autoplay=true`;
       if (server === 'smashy') return `https://player.smashystream.com/tv/${imdbId || tmdbId}?s=${season}&e=${episode}`;
       if (server === 'multiembed') return `https://multiembed.mov/?video_id=${imdbId || tmdbId}&s=${season}&e=${episode}`;
       if (server === 'vidsrc') return `https://vidsrc.sh/embed/tv?imdb=${imdbId}&season=${season}&episode=${episode}`;
-      return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}?primaryColor=e50914&secondaryColor=141414&iconColor=ffffff&autoplay=true`;
+      if (server === '2embed') return `https://www.2embed.cc/embedtv/${imdbId}&s=${season}&e=${episode}`;
+      return `https://player.smashystream.com/tv/${imdbId || tmdbId}?s=${season}&e=${episode}`;
     }
   }
 
@@ -484,22 +484,26 @@
     const seasonEpText = type === 'series' ? ` · T${season} E${episode}` : '';
     playerStreamTitle.textContent = `${item.title}${seasonEpText}`;
 
-    // Configure External Links
-    const queryId = item.imdb_id || item.id;
-    playerExtStremioBtn.onclick = () => {
-      window.location.href = `stremio:///detail/${type}/${queryId}`;
-    };
+    // Configure External Links (if buttons exist)
+    if (playerExtStremioBtn) {
+      const queryId = item.imdb_id || item.id;
+      playerExtStremioBtn.onclick = () => {
+        window.location.href = `stremio:///detail/${type}/${queryId}`;
+      };
+    }
 
-    playerExtVlcBtn.onclick = () => {
-      triggerVlcLaunch();
-    };
+    if (playerExtVlcBtn) {
+      playerExtVlcBtn.onclick = () => {
+        triggerVlcLaunch();
+      };
+    }
 
     // Update Server Dropdown and Label
     const serverNames = {
-      'vidlink': 'Servidor 1 (1080p)',
-      'smashy': 'Servidor 2 (Rápido)',
-      'multiembed': 'Servidor 3 (Latino)',
-      'vidsrc': 'Servidor 4 (Alternativo)'
+      'smashy': 'Servidor 1',
+      'multiembed': 'Servidor 2',
+      'vidsrc': 'Servidor 3',
+      '2embed': 'Servidor 4'
     };
     if (currentServerLabel) {
       currentServerLabel.textContent = serverNames[state.currentServer] || 'Servidor 1';
@@ -742,10 +746,10 @@
         item.classList.add('active');
 
         const serverNames = {
-          'vidlink': 'Servidor 1 (1080p)',
-          'smashy': 'Servidor 2 (Rápido)',
-          'multiembed': 'Servidor 3 (Latino)',
-          'vidsrc': 'Servidor 4 (Alternativo)'
+          'smashy': 'Servidor 1',
+          'multiembed': 'Servidor 2',
+          'vidsrc': 'Servidor 3',
+          '2embed': 'Servidor 4'
         };
         if (currentServerLabel) {
           currentServerLabel.textContent = serverNames[serverKey] || 'Servidor';
