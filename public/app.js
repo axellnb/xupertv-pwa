@@ -9,13 +9,12 @@
     activeType: 'movie',
     currentSeason: 1,
     currentEpisode: 1,
-    activeTorrent: null,
-    wtClient: null,
+    currentServer: 'vidsrc',
     searchDebounce: null,
   };
 
   // DOM Elements
-  const heroBanner = document.getElementById('heroBanner');
+  const brandHomeBtn = document.getElementById('brandHomeBtn');
   const heroBg = document.getElementById('heroBg');
   const heroTitle = document.getElementById('heroTitle');
   const heroOverview = document.getElementById('heroOverview');
@@ -25,6 +24,7 @@
   const heroInfoBtn = document.getElementById('heroInfoBtn');
 
   const searchInput = document.getElementById('searchInput');
+  const searchClearBtn = document.getElementById('searchClearBtn');
   const searchResultsSection = document.getElementById('searchResultsSection');
   const searchResultsGrid = document.getElementById('searchResultsGrid');
   const searchResultsTitle = document.getElementById('searchResultsTitle');
@@ -54,6 +54,7 @@
   const dialogGenres = document.getElementById('dialogGenres');
   const dialogOverview = document.getElementById('dialogOverview');
   const dialogFavBtn = document.getElementById('dialogFavBtn');
+  const favBtnLabel = document.getElementById('favBtnLabel');
   const quickPlayBtn = document.getElementById('quickPlayBtn');
   const openInStremioQuickBtn = document.getElementById('openInStremioQuickBtn');
   const seriesControls = document.getElementById('seriesControls');
@@ -64,29 +65,19 @@
   // Player
   const playerDialog = document.getElementById('playerDialog');
   const closePlayerBtn = document.getElementById('closePlayerBtn');
+  const closePlayerIconBtn = document.getElementById('closePlayerIconBtn');
   const playerIframe = document.getElementById('playerIframe');
-  const playerServerSelect = document.getElementById('playerServerSelect');
   const playerStreamTitle = document.getElementById('playerStreamTitle');
-  const playerLoader = document.getElementById('playerLoader');
   const playerExtVlcBtn = document.getElementById('playerExtVlcBtn');
   const playerExtStremioBtn = document.getElementById('playerExtStremioBtn');
   const toast = document.getElementById('toast');
-
-  // Initialize WebTorrent client
-  if (typeof WebTorrent !== 'undefined') {
-    try {
-      state.wtClient = new WebTorrent();
-    } catch (e) {
-      console.warn('WebTorrent client initialization error:', e);
-    }
-  }
 
   // Toast Notification
   function showToast(msg) {
     if (!toast) return;
     toast.textContent = msg;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
+    setTimeout(() => toast.classList.remove('show'), 2500);
   }
 
   // Load Catalogs
@@ -103,7 +94,7 @@
       renderHome();
     } catch (err) {
       console.error('Error loading catalogs:', err);
-      showToast('Error cargando catálogo de XuperTV');
+      showToast('Error cargando catálogo');
     }
   }
 
@@ -145,15 +136,15 @@
 
     heroBg.style.backgroundImage = `url('${item.backdropUrl || item.posterUrl}')`;
     heroTitle.textContent = item.title;
-    heroOverview.textContent = item.overview || 'Sinopsis disponible al reproducir.';
-    heroRating.textContent = `⭐ ${item.rating || 'N/A'}`;
+    heroOverview.textContent = item.overview || 'Sinopsis disponible.';
+    heroRating.textContent = item.rating || 'N/A';
     heroYear.textContent = item.releaseYear || '';
 
     heroPlayBtn.onclick = () => openWebPlayer(item, typeLabel, 1, 1);
     heroInfoBtn.onclick = () => openDetail(item, typeLabel);
   }
 
-  // Render Single Media Card
+  // Render Single Media Card (No emojis, clean SVGs)
   function createMediaCard(item, type) {
     const card = document.createElement('div');
     card.className = 'media-card';
@@ -163,7 +154,12 @@
     card.innerHTML = `
       <div class="media-poster-box">
         <img class="media-poster" src="${item.posterUrl || ''}" alt="${item.title}" loading="lazy" onerror="this.src='/icons/icon-512.png'">
-        <span class="media-rating-pill">⭐ ${item.rating || 'N/A'}</span>
+        <span class="media-rating-pill">
+          <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span>${item.rating || 'N/A'}</span>
+        </span>
         <span class="media-type-pill">${isMovie ? 'Película' : 'Serie'}</span>
       </div>
       <div class="media-info">
@@ -200,7 +196,7 @@
     dialogTitle.textContent = item.title;
     dialogType.textContent = state.activeType === 'movie' ? 'Película' : 'Serie TV';
     dialogYear.textContent = item.releaseYear || '';
-    dialogRating.textContent = `⭐ ${item.rating || 'N/A'}`;
+    dialogRating.textContent = item.rating || 'N/A';
     dialogOverview.textContent = item.overview || 'Sin sinopsis disponible.';
 
     // Genres
@@ -277,7 +273,7 @@
     streamsList.innerHTML = `
       <div class="streams-loading">
         <div class="spinner"></div>
-        <p>Buscando las mejores fuentes con el motor XuperTV...</p>
+        <p>Buscando fuentes con el motor XuperTV...</p>
       </div>
     `;
 
@@ -298,7 +294,7 @@
         streamsList.innerHTML = `
           <div class="streams-loading">
             <p>No se encontraron torrents activos para este título actualmente.</p>
-            <p style="font-size: 0.8rem; margin-top: 6px; color: var(--text-dim);">Prueba con otra temporada o película del catálogo.</p>
+            <p style="font-size: 0.8rem; margin-top: 4px; color: var(--text-dim);">Usa el botón Reproducir superior para ver la versión en streaming web.</p>
           </div>
         `;
         return;
@@ -309,13 +305,13 @@
       console.error('Fetch streams error:', err);
       streamsList.innerHTML = `
         <div class="streams-loading">
-          <p>Error conectando al servidor de streaming de XuperTV.</p>
+          <p>Servicio de torrents temporalmente no disponible.</p>
         </div>
       `;
     }
   }
 
-  // Render Streams List
+  // Render Streams List (Clean, disciplined Stremio style, no emojis)
   function renderStreams(streams) {
     streamsList.innerHTML = '';
 
@@ -323,9 +319,9 @@
       const card = document.createElement('div');
       card.className = 'stream-card';
 
-      const quality = stream.quality || '1080p';
-      const langText = stream.isSpanish ? 'Español Latino / Multi' : 'Multi-Audio';
-      const seedsText = stream.seeds > 0 ? `⚡ ${stream.seeds} semillas` : '';
+      const quality = stream.quality || '1080p FHD';
+      const langText = stream.isSpanish ? 'Español Latino' : 'Multi-Audio';
+      const seedsText = stream.seeds > 0 ? `${stream.seeds} fuentes` : '';
       const magnetUrl = stream.magnet || '';
 
       card.innerHTML = `
@@ -333,15 +329,15 @@
           <div class="stream-header-row">
             <span class="stream-quality-tag">${quality}</span>
             <span class="stream-lang-tag">${langText}</span>
-            <span class="stream-seeds-tag">${seedsText}</span>
+            ${seedsText ? `<span class="stream-seeds-tag">${seedsText}</span>` : ''}
           </div>
-          <div class="stream-filename">${stream.title ? stream.title.replace(/\n/g, ' ') : `Opción ${idx + 1}`}</div>
+          <div class="stream-filename">${stream.title ? stream.title.replace(/\n/g, ' ') : `Fuente ${idx + 1}`}</div>
         </div>
         <div class="stream-actions">
-          <button class="btn btn-sm btn-primary play-stream-btn">▶️ Reproducir</button>
-          <button class="btn btn-sm btn-outline open-vlc-btn" title="Abrir en VLC / Outplayer">🍊 VLC</button>
-          <button class="btn btn-sm btn-outline open-stremio-btn" title="Abrir en Stremio">🎬 Stremio</button>
-          <button class="btn btn-sm btn-outline copy-magnet-btn" title="Copiar Magnet">📋</button>
+          <button class="btn btn-sm btn-primary play-stream-btn">Reproducir</button>
+          <button class="btn btn-sm btn-outline open-vlc-btn" title="Abrir en VLC o Outplayer">VLC</button>
+          <button class="btn btn-sm btn-outline open-stremio-btn" title="Abrir en Stremio">Stremio</button>
+          <button class="btn btn-sm btn-outline copy-magnet-btn" title="Copiar Magnet">Copiar</button>
         </div>
       `;
 
@@ -357,14 +353,12 @@
 
       vlcBtn.onclick = () => {
         if (!magnetUrl) {
-          showToast('No hay enlace magnet disponible');
+          showToast('No hay enlace magnet');
           return;
         }
-        // Universal iOS/macOS VLC & external player scheme
         const vlcUrl = `vlc-x-callback://x-callback-url/stream?url=${encodeURIComponent(magnetUrl)}`;
         window.location.href = vlcUrl;
         setTimeout(() => {
-          // Fallback to magnet
           window.location.href = magnetUrl;
         }, 1200);
       };
@@ -377,7 +371,7 @@
       copyBtn.onclick = () => {
         if (magnetUrl) {
           navigator.clipboard.writeText(magnetUrl).then(() => {
-            showToast('✅ Enlace magnet copiado al portapapeles');
+            showToast('Enlace magnet copiado');
           }).catch(() => {
             showToast('Error copiando magnet');
           });
@@ -412,7 +406,7 @@
     state.currentSeason = season;
     state.currentEpisode = episode;
 
-    const seasonEpText = type === 'series' ? ` · Temporada ${season} - Episodio ${episode}` : '';
+    const seasonEpText = type === 'series' ? ` · T${season} E${episode}` : '';
     playerStreamTitle.textContent = `${item.title}${seasonEpText}`;
 
     // Configure External Links
@@ -422,28 +416,33 @@
     };
 
     playerExtVlcBtn.onclick = () => {
-      // Find top magnet if available
       const firstStreamCard = streamsList.querySelector('.stream-card');
       if (firstStreamCard) {
         const vlcBtn = firstStreamCard.querySelector('.open-vlc-btn');
         if (vlcBtn) vlcBtn.click();
       } else {
-        showToast('Abriendo enlace de streaming...');
+        showToast('Abriendo reproductor...');
       }
     };
 
-    // Configure Server Selector
-    const currentServer = (playerServerSelect && playerServerSelect.value) || 'vidsrc';
-    const embedUrl = getEmbedUrl(item, type, season, episode, currentServer);
+    // Set Server Pill States
+    document.querySelectorAll('.server-pill').forEach(pill => {
+      if (pill.dataset.server === state.currentServer) {
+        pill.classList.add('active');
+      } else {
+        pill.classList.remove('active');
+      }
 
-    playerIframe.src = embedUrl;
-
-    if (playerServerSelect) {
-      playerServerSelect.onchange = (e) => {
-        const newServer = e.target.value;
-        playerIframe.src = getEmbedUrl(item, type, state.currentSeason, state.currentEpisode, newServer);
+      pill.onclick = () => {
+        document.querySelectorAll('.server-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.currentServer = pill.dataset.server;
+        playerIframe.src = getEmbedUrl(item, type, state.currentSeason, state.currentEpisode, state.currentServer);
       };
-    }
+    });
+
+    const embedUrl = getEmbedUrl(item, type, season, episode, state.currentServer);
+    playerIframe.src = embedUrl;
 
     playerDialog.showModal();
   }
@@ -454,11 +453,39 @@
     playerDialog.close();
   }
 
+  // Navigate to Home Smoothly
+  function navigateHome() {
+    // Close any open modals
+    if (playerDialog.open) closePlayer();
+    if (detailDialog.open) detailDialog.close();
+
+    // Reset Search
+    searchInput.value = '';
+    searchClearBtn.style.display = 'none';
+    searchResultsSection.style.display = 'none';
+    favoritesSection.style.display = 'none';
+    catalogSections.style.display = 'block';
+
+    // Update active tab in Desktop and Mobile nav
+    document.querySelectorAll('.nav-btn, .bottom-nav-item').forEach(b => {
+      if (b.dataset.tab === 'discover') {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   // Favorite Management
   function updateFavButton() {
     if (!state.activeItem) return;
     const isFav = state.favorites.includes(state.activeItem.id);
-    dialogFavBtn.textContent = isFav ? '❤️' : '🤍';
+    if (favBtnLabel) {
+      favBtnLabel.textContent = isFav ? 'En Mi Lista' : 'Mi Lista';
+    }
     dialogFavBtn.onclick = () => toggleFavorite(state.activeItem);
   }
 
@@ -466,10 +493,10 @@
     const idx = state.favorites.indexOf(item.id);
     if (idx > -1) {
       state.favorites.splice(idx, 1);
-      showToast('Eliminado de favoritos');
+      showToast('Eliminado de Mi Lista');
     } else {
       state.favorites.push(item.id);
-      showToast('Guardado en favoritos');
+      showToast('Añadido a Mi Lista');
     }
     localStorage.setItem('xupertv_favs', JSON.stringify(state.favorites));
     updateFavButton();
@@ -484,11 +511,16 @@
     favItems.forEach(it => favoritesGrid.appendChild(createMediaCard(it)));
   }
 
-  // Search
+  // Search Logic
   function handleSearch(query) {
     clearTimeout(state.searchDebounce);
+    const q = query.trim().toLowerCase();
+
+    if (searchClearBtn) {
+      searchClearBtn.style.display = q ? 'block' : 'none';
+    }
+
     state.searchDebounce = setTimeout(() => {
-      const q = query.trim().toLowerCase();
       if (!q) {
         searchResultsSection.style.display = 'none';
         catalogSections.style.display = 'block';
@@ -510,57 +542,72 @@
       searchResultsTitle.textContent = `Resultados para "${query}" (${matches.length})`;
       searchResultsGrid.innerHTML = '';
       matches.forEach(item => searchResultsGrid.appendChild(createMediaCard(item)));
-    }, 200);
+    }, 180);
   }
 
-  // Tab Navigation
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const tab = btn.dataset.tab;
-
-      searchInput.value = '';
-      searchResultsSection.style.display = 'none';
-
-      if (tab === 'discover') {
-        catalogSections.style.display = 'block';
-        favoritesSection.style.display = 'none';
-      } else if (tab === 'movies') {
-        catalogSections.style.display = 'none';
-        favoritesSection.style.display = 'none';
-        searchResultsSection.style.display = 'block';
-        searchResultsTitle.textContent = `Películas XuperTV (${state.movies.length})`;
-        searchResultsGrid.innerHTML = '';
-        state.movies.forEach(m => searchResultsGrid.appendChild(createMediaCard(m, 'movie')));
-      } else if (tab === 'series') {
-        catalogSections.style.display = 'none';
-        favoritesSection.style.display = 'none';
-        searchResultsSection.style.display = 'block';
-        searchResultsTitle.textContent = `Series XuperTV (${state.series.length})`;
-        searchResultsGrid.innerHTML = '';
-        state.series.forEach(s => searchResultsGrid.appendChild(createMediaCard(s, 'series')));
-      } else if (tab === 'favorites') {
-        catalogSections.style.display = 'none';
-        searchResultsSection.style.display = 'none';
-        favoritesSection.style.display = 'block';
-        renderFavorites();
+  // Switch Tab Handler
+  function switchTab(tab) {
+    document.querySelectorAll('.nav-btn, .bottom-nav-item').forEach(b => {
+      if (b.dataset.tab === tab) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
       }
     });
-  });
 
-  // Modern Web Guidance: Light Dismiss implementation for <dialog>
-  detailDialog.addEventListener('click', (e) => {
-    if (e.target === detailDialog) {
-      detailDialog.close();
+    if (detailDialog.open) detailDialog.close();
+
+    if (tab === 'discover') {
+      navigateHome();
+    } else if (tab === 'movies') {
+      searchInput.value = '';
+      catalogSections.style.display = 'none';
+      favoritesSection.style.display = 'none';
+      searchResultsSection.style.display = 'block';
+      searchResultsTitle.textContent = `Películas (${state.movies.length})`;
+      searchResultsGrid.innerHTML = '';
+      state.movies.forEach(m => searchResultsGrid.appendChild(createMediaCard(m, 'movie')));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tab === 'series') {
+      searchInput.value = '';
+      catalogSections.style.display = 'none';
+      favoritesSection.style.display = 'none';
+      searchResultsSection.style.display = 'block';
+      searchResultsTitle.textContent = `Series (${state.series.length})`;
+      searchResultsGrid.innerHTML = '';
+      state.series.forEach(s => searchResultsGrid.appendChild(createMediaCard(s, 'series')));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tab === 'search') {
+      searchInput.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tab === 'favorites') {
+      searchInput.value = '';
+      catalogSections.style.display = 'none';
+      searchResultsSection.style.display = 'none';
+      favoritesSection.style.display = 'block';
+      renderFavorites();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  // Desktop & Mobile Tab Listeners
+  document.querySelectorAll('.nav-btn, .bottom-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
-  closeDetailBtn.addEventListener('click', () => {
-    detailDialog.close();
+  // Home Brand Button Listener
+  if (brandHomeBtn) {
+    brandHomeBtn.addEventListener('click', navigateHome);
+  }
+
+  // Modal Close Listeners
+  detailDialog.addEventListener('click', (e) => {
+    if (e.target === detailDialog) detailDialog.close();
   });
+  closeDetailBtn.addEventListener('click', () => detailDialog.close());
 
   closePlayerBtn.addEventListener('click', closePlayer);
+  if (closePlayerIconBtn) closePlayerIconBtn.addEventListener('click', closePlayer);
 
   // Carousel Arrow Controls
   document.querySelectorAll('.carousel-arrow').forEach(arrow => {
@@ -568,18 +615,20 @@
       const targetId = arrow.dataset.target;
       const track = document.getElementById(targetId);
       if (!track) return;
-      const scrollAmount = arrow.classList.contains('left') ? -450 : 450;
+      const scrollAmount = arrow.classList.contains('left') ? -380 : 380;
       track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     });
   });
 
-  // Search Input Listeners
+  // Search Listeners
   searchInput.addEventListener('input', (e) => handleSearch(e.target.value));
-  clearSearchBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    searchResultsSection.style.display = 'none';
-    catalogSections.style.display = 'block';
-  });
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      handleSearch('');
+    });
+  }
+  clearSearchBtn.addEventListener('click', navigateHome);
 
   // Start Application
   loadData();
