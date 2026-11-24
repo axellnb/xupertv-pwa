@@ -35,6 +35,8 @@
     movies: [],
     series: [],
     favorites: getSafeStorage('xupertv_favs', []),
+    continueWatching: getSafeStorage('xupertv_history', []),
+    debridToken: localStorage.getItem('xupertv_debrid_token') || '',
     activeItem: null,
     activeType: 'movie',
     currentSeason: 1,
@@ -63,6 +65,18 @@
   const favoritesSection = document.getElementById('favoritesSection');
   const favoritesGrid = document.getElementById('favoritesGrid');
   const favoritesCount = document.getElementById('favoritesCount');
+
+  // Continue Watching Elements
+  const continueWatchingSection = document.getElementById('continueWatchingSection');
+  const carouselContinue = document.getElementById('carouselContinue');
+  const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+  // Category Tab Views with Genre Pills
+  const tabCatalogSection = document.getElementById('tabCatalogSection');
+  const tabCatalogTitle = document.getElementById('tabCatalogTitle');
+  const tabCatalogCount = document.getElementById('tabCatalogCount');
+  const tabGenreFilter = document.getElementById('tabGenreFilter');
+  const tabCatalogGrid = document.getElementById('tabCatalogGrid');
 
   // Carousels
   const carouselTrending = document.getElementById('carouselTrending');
@@ -99,12 +113,21 @@
   const playerOverlay = document.getElementById('playerOverlay');
   const closePlayerBtn = document.getElementById('closePlayerBtn');
   const playerIframe = document.getElementById('playerIframe');
+  const nativeVideoPlayer = document.getElementById('nativeVideoPlayer');
   const playerStreamTitle = document.getElementById('playerStreamTitle');
   const serverMenuBtn = document.getElementById('serverMenuBtn');
   const currentServerLabel = document.getElementById('currentServerLabel');
   const serverDropdownMenu = document.getElementById('serverDropdownMenu');
   const playerFullscreenBtn = document.getElementById('playerFullscreenBtn');
   const toast = document.getElementById('toast');
+
+  // Settings / Debrid Modal
+  const settingsDialog = document.getElementById('settingsDialog');
+  const openSettingsBtn = document.getElementById('openSettingsBtn');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const debridTokenInput = document.getElementById('debridTokenInput');
+  const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+  const removeSettingsBtn = document.getElementById('removeSettingsBtn');
 
   // Screen Wake Lock & Body Scroll Lock
   let wakeLock = null;
@@ -165,6 +188,7 @@
       .sort((a, b) => parseFloat(b.rating || 0) - parseFloat(a.rating || 0));
     
     trendingCount.textContent = `${trending.length} títulos`;
+    renderContinueWatching();
     renderCarousel(carouselTrending, trending);
     renderCarousel(carouselMovies, state.movies.slice(0, 30));
     renderCarousel(carouselSeries, state.series.slice(0, 30));
@@ -195,6 +219,73 @@
 
     heroPlayBtn.onclick = () => openWebPlayer(item, typeLabel, 1, 1);
     heroInfoBtn.onclick = () => openDetail(item, typeLabel);
+  }
+
+  // Continue Watching History Controller
+  function saveWatchProgress(item, type, season = 1, episode = 1) {
+    if (!item) return;
+    const progressItem = {
+      id: item.id,
+      title: item.title,
+      posterUrl: item.posterUrl || '',
+      type: type || (item.id.startsWith('mov_') ? 'movie' : 'series'),
+      season: type === 'series' ? season : null,
+      episode: type === 'series' ? episode : null,
+      rating: item.rating || '',
+      releaseYear: item.releaseYear || '',
+      imdb_id: item.imdb_id || item.id,
+      timestamp: Date.now()
+    };
+
+    // Remove older entry if exists
+    state.continueWatching = state.continueWatching.filter(it => it.id !== item.id);
+    state.continueWatching.unshift(progressItem);
+    if (state.continueWatching.length > 15) {
+      state.continueWatching.pop();
+    }
+    setSafeStorage('xupertv_history', state.continueWatching);
+    renderContinueWatching();
+  }
+
+  function renderContinueWatching() {
+    if (!continueWatchingSection || !carouselContinue) return;
+    if (!state.continueWatching || state.continueWatching.length === 0) {
+      continueWatchingSection.style.display = 'none';
+      return;
+    }
+
+    continueWatchingSection.style.display = 'block';
+    carouselContinue.innerHTML = '';
+
+    state.continueWatching.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'continue-card';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+
+      const safeTitle = escapeHtml(item.title);
+      const safePoster = escapeHtml(item.posterUrl || '');
+      const badgeText = item.type === 'series' ? `T${item.season} · E${item.episode}` : 'Película';
+
+      card.innerHTML = `
+        <div class="media-poster-box">
+          <img class="media-poster" src="${safePoster}" alt="${safeTitle}" loading="lazy" onerror="this.src='/icons/icon-512.png'">
+          <span class="continue-badge">${badgeText}</span>
+        </div>
+        <div class="continue-progress-bar">
+          <div class="continue-progress-fill" style="width: 70%;"></div>
+        </div>
+        <div class="media-info" style="padding: 4px 2px 2px;">
+          <h4 class="media-title" title="${safeTitle}">${safeTitle}</h4>
+        </div>
+      `;
+
+      card.onclick = () => {
+        openWebPlayer(item, item.type, item.season || 1, item.episode || 1);
+      };
+
+      carouselContinue.appendChild(card);
+    });
   }
 
   // Render Single Media Card (XSS-Safe, accessible, uniform tap behavior)
@@ -503,7 +594,30 @@
       const stremioBtn = card.querySelector('.open-stremio-btn');
       const copyBtn = card.querySelector('.copy-magnet-btn');
 
-      playBtn.onclick = () => {
+      if (state.debridToken && magnetUrl) {
+        playBtn.textContent = '⚡ Debrid 4K';
+        playBtn.title = 'Reproducir directo sin anuncios ni captchas vía Debrid';
+      }
+
+      playBtn.onclick = async () => {
+        if (state.debridToken && magnetUrl) {
+          showToast('Desbloqueando stream de alta velocidad...');
+          try {
+            const res = await fetch(`/api/debrid?token=${encodeURIComponent(state.debridToken)}&magnet=${encodeURIComponent(magnetUrl)}`);
+            const data = await res.json();
+            if (data && data.streamUrl) {
+              const epText = state.activeType === 'series' ? ` · T${state.currentSeason} E${state.currentEpisode}` : '';
+              playDirectVideo(data.streamUrl, `${state.activeItem.title}${epText} (${quality})`);
+              saveWatchProgress(state.activeItem, state.activeType, state.currentSeason, state.currentEpisode);
+              return;
+            } else if (data && data.error) {
+              showToast(data.error);
+            }
+          } catch (err) {
+            console.warn('Debrid unrestrict failed:', err);
+            showToast('Fallo al desbloquear Debrid, abriendo streaming web...');
+          }
+        }
         openWebPlayer(state.activeItem, state.activeType, state.currentSeason, state.currentEpisode);
       };
 
@@ -545,10 +659,49 @@
     }
   }
 
-  // Floating Cinema Top Bar Controller (Always accessible to exit)
-  function showOverlay() {
+  // Floating Cinema Top Bar Controller (Auto-hiding overlay)
+  let overlayTimer = null;
+  function resetOverlayTimer() {
     if (!playerOverlay) return;
     playerOverlay.classList.remove('hidden');
+    clearTimeout(overlayTimer);
+    overlayTimer = setTimeout(() => {
+      // Keep visible if server dropdown is open
+      if (serverDropdownMenu && serverDropdownMenu.classList.contains('show')) return;
+      playerOverlay.classList.add('hidden');
+    }, 3800);
+  }
+
+  function showOverlay() {
+    resetOverlayTimer();
+  }
+
+  // Direct HTML5 Video Player (Debrid / Direct MP4 / M3U8 without iframes or ads)
+  function playDirectVideo(url, title) {
+    if (!url) return;
+    playerStreamTitle.textContent = title || 'Reproduciendo';
+
+    if (playerIframe) {
+      playerIframe.style.display = 'none';
+      playerIframe.src = 'about:blank';
+    }
+
+    if (nativeVideoPlayer) {
+      nativeVideoPlayer.style.display = 'block';
+      nativeVideoPlayer.src = url;
+      nativeVideoPlayer.play().catch(e => console.warn('Autoplay prevented:', e));
+    }
+
+    if (appContainer) {
+      appContainer.style.display = 'none';
+    }
+    document.body.classList.add('player-open');
+    requestWakeLock();
+    try {
+      history.pushState({ playerOpen: true }, '');
+    } catch (_) {}
+    playerDialog.showModal();
+    showOverlay();
   }
 
   // In-App Web Video Streaming Logic (Instant Multi-Server Playback)
@@ -558,6 +711,9 @@
     state.activeType = type;
     state.currentSeason = season;
     state.currentEpisode = episode;
+
+    // Track Progress in Continue Watching
+    saveWatchProgress(item, type, season, episode);
 
     const seasonEpText = type === 'series' ? ` · T${season} E${episode}` : '';
     playerStreamTitle.textContent = `${item.title}${seasonEpText}`;
@@ -576,8 +732,17 @@
       m.classList.toggle('active', m.dataset.server === state.currentServer);
     });
 
+    if (nativeVideoPlayer) {
+      nativeVideoPlayer.pause();
+      nativeVideoPlayer.src = '';
+      nativeVideoPlayer.style.display = 'none';
+    }
+
     const embedUrl = getEmbedUrl(item, type, season, episode, state.currentServer);
-    playerIframe.src = embedUrl;
+    if (playerIframe) {
+      playerIframe.style.display = 'block';
+      playerIframe.src = embedUrl;
+    }
 
     // Completely hide the background app DOM so mobile Safari CANNOT slide or scroll behind the video!
     if (appContainer) {
@@ -594,6 +759,7 @@
 
   // Close Player and Exit Cleanly
   function closePlayer(triggerHistory = true) {
+    clearTimeout(overlayTimer);
     releaseWakeLock();
     if (serverDropdownMenu) serverDropdownMenu.classList.remove('show');
     
@@ -602,7 +768,14 @@
       appContainer.style.display = '';
     }
     document.body.classList.remove('player-open');
-    playerIframe.src = 'about:blank';
+    if (nativeVideoPlayer) {
+      nativeVideoPlayer.pause();
+      nativeVideoPlayer.src = '';
+      nativeVideoPlayer.style.display = 'none';
+    }
+    if (playerIframe) {
+      playerIframe.src = 'about:blank';
+    }
     if (playerDialog.open) {
       playerDialog.close();
     }
@@ -618,13 +791,17 @@
     // Close any open modals
     if (playerDialog.open) closePlayer();
     if (detailDialog.open) detailDialog.close();
+    if (settingsDialog && settingsDialog.open) settingsDialog.close();
 
-    // Reset Search
+    // Reset Views
     searchInput.value = '';
     searchClearBtn.style.display = 'none';
     searchResultsSection.style.display = 'none';
     favoritesSection.style.display = 'none';
+    if (tabCatalogSection) tabCatalogSection.style.display = 'none';
     catalogSections.style.display = 'block';
+
+    renderContinueWatching();
 
     // Update active tab in Desktop and Mobile nav
     document.querySelectorAll('.nav-btn, .bottom-nav-item').forEach(b => {
@@ -757,6 +934,61 @@
     searchResultsTitle.textContent = `Resultados para "${query}" (${matches.length})`;
   }
 
+  // Open Dynamic Category View with Genre Filter Chips
+  function openCategoryView(type) {
+    if (!tabCatalogSection) return;
+    searchInput.value = '';
+    catalogSections.style.display = 'none';
+    favoritesSection.style.display = 'none';
+    searchResultsSection.style.display = 'none';
+    tabCatalogSection.style.display = 'block';
+
+    const items = type === 'movie' ? state.movies : state.series;
+    const title = type === 'movie' ? 'Películas' : 'Series';
+    tabCatalogTitle.textContent = title;
+    tabCatalogCount.textContent = `${items.length} títulos`;
+
+    // Extract unique genres
+    const genreSet = new Set();
+    items.forEach(it => {
+      (it.genres || []).forEach(g => {
+        if (g && g.trim()) genreSet.add(g.trim());
+      });
+    });
+
+    const genresList = ['Todos', ...Array.from(genreSet).sort()];
+
+    // Render genre chips
+    tabGenreFilter.innerHTML = '';
+    let selectedGenre = 'Todos';
+
+    const renderFilteredGrid = () => {
+      const filtered = selectedGenre === 'Todos' 
+        ? items 
+        : items.filter(it => (it.genres || []).includes(selectedGenre));
+      
+      tabCatalogCount.textContent = `${filtered.length} títulos`;
+      tabCatalogGrid.innerHTML = '';
+      filtered.forEach(it => tabCatalogGrid.appendChild(createMediaCard(it, type)));
+    };
+
+    genresList.forEach(g => {
+      const chip = document.createElement('button');
+      chip.className = `genre-chip ${g === selectedGenre ? 'active' : ''}`;
+      chip.textContent = g;
+      chip.onclick = () => {
+        selectedGenre = g;
+        tabGenreFilter.querySelectorAll('.genre-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        renderFilteredGrid();
+      };
+      tabGenreFilter.appendChild(chip);
+    });
+
+    renderFilteredGrid();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   // Switch Tab Handler
   function switchTab(tab) {
     document.querySelectorAll('.nav-btn, .bottom-nav-item').forEach(b => {
@@ -772,30 +1004,21 @@
     if (tab === 'discover') {
       navigateHome();
     } else if (tab === 'movies') {
-      searchInput.value = '';
-      catalogSections.style.display = 'none';
-      favoritesSection.style.display = 'none';
-      searchResultsSection.style.display = 'block';
-      searchResultsTitle.textContent = `Películas (${state.movies.length})`;
-      searchResultsGrid.innerHTML = '';
-      state.movies.forEach(m => searchResultsGrid.appendChild(createMediaCard(m, 'movie')));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      openCategoryView('movie');
     } else if (tab === 'series') {
-      searchInput.value = '';
+      openCategoryView('series');
+    } else if (tab === 'search') {
       catalogSections.style.display = 'none';
       favoritesSection.style.display = 'none';
+      if (tabCatalogSection) tabCatalogSection.style.display = 'none';
       searchResultsSection.style.display = 'block';
-      searchResultsTitle.textContent = `Series (${state.series.length})`;
-      searchResultsGrid.innerHTML = '';
-      state.series.forEach(s => searchResultsGrid.appendChild(createMediaCard(s, 'series')));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (tab === 'search') {
       searchInput.focus();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (tab === 'favorites') {
       searchInput.value = '';
       catalogSections.style.display = 'none';
       searchResultsSection.style.display = 'none';
+      if (tabCatalogSection) tabCatalogSection.style.display = 'none';
       favoritesSection.style.display = 'block';
       renderFavorites();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -906,6 +1129,53 @@
 
     document.addEventListener('click', () => {
       if (serverDropdownMenu) serverDropdownMenu.classList.remove('show');
+    });
+  }
+
+  // Clear Continue Watching History
+  if (clearHistoryBtn) {
+    clearHistoryBtn.addEventListener('click', () => {
+      state.continueWatching = [];
+      setSafeStorage('xupertv_history', []);
+      renderContinueWatching();
+      showToast('Historial borrado');
+    });
+  }
+
+  // Settings & Debrid Dialog Controller
+  if (openSettingsBtn && settingsDialog) {
+    openSettingsBtn.addEventListener('click', () => {
+      if (debridTokenInput) debridTokenInput.value = state.debridToken || '';
+      settingsDialog.showModal();
+    });
+  }
+
+  if (closeSettingsBtn && settingsDialog) {
+    closeSettingsBtn.addEventListener('click', () => settingsDialog.close());
+  }
+
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', () => {
+      const token = debridTokenInput ? debridTokenInput.value.trim() : '';
+      state.debridToken = token;
+      try {
+        if (token) localStorage.setItem('xupertv_debrid_token', token);
+        else localStorage.removeItem('xupertv_debrid_token');
+      } catch (_) {}
+      showToast(token ? 'Token Debrid guardado' : 'Token eliminado');
+      if (settingsDialog) settingsDialog.close();
+    });
+  }
+
+  if (removeSettingsBtn) {
+    removeSettingsBtn.addEventListener('click', () => {
+      state.debridToken = '';
+      if (debridTokenInput) debridTokenInput.value = '';
+      try {
+        localStorage.removeItem('xupertv_debrid_token');
+      } catch (_) {}
+      showToast('Token eliminado');
+      if (settingsDialog) settingsDialog.close();
     });
   }
 

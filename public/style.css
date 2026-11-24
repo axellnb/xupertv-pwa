@@ -430,6 +430,52 @@ body.modal-open, body.player-open {
   transform: scale(1.04);
 }
 
+/* Continue Watching Cards */
+.continue-card {
+  flex: 0 0 150px;
+  width: 150px;
+  min-width: 0;
+  max-width: 150px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  position: relative;
+  transition: var(--transition);
+}
+
+.continue-card:hover {
+  transform: scale(1.04);
+}
+
+.continue-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: var(--netflix-red);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.continue-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.continue-progress-fill {
+  height: 100%;
+  background: var(--netflix-red);
+  border-radius: 2px;
+}
+
 .media-poster-box {
   position: relative;
   width: 100%;
@@ -1044,7 +1090,7 @@ dialog.player-dialog::backdrop {
   display: block;
 }
 
-/* Persistent, Always-Accessible Cinema Top Bar */
+/* Persistent, Auto-Hiding Cinema Top Bar */
 .player-overlay {
   position: absolute;
   top: 0;
@@ -1053,6 +1099,13 @@ dialog.player-dialog::backdrop {
   z-index: 9999;
   pointer-events: auto;
   opacity: 1;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.player-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
 }
 
 .player-overlay-top {
