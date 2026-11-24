@@ -488,7 +488,7 @@
       "Suspenso",
       "Drama"
     ],
-    "imdb_id": "mov_1310458"
+    "imdb_id": "tt32853247"
   },
   {
     "id": "mov_1595325",
@@ -749,7 +749,7 @@
       "Comedia",
       "Drama"
     ],
-    "imdb_id": "mov_1234139"
+    "imdb_id": "tt31193309"
   },
   {
     "id": "mov_1117898",
@@ -2285,21 +2285,6 @@
       "Ciencia Ficción"
     ],
     "imdb_id": "tt26657236"
-  },
-  {
-    "id": "mov_1389379",
-    "title": "రణబాలి",
-    "overview": "Disponible en alta definición con audio latino y subtítulos.",
-    "posterUrl": "https://image.tmdb.org/t/p/w500/7nSzaAYx3CyqU7TtA2X91AGXTvB.jpg",
-    "backdropUrl": "https://image.tmdb.org/t/p/w1280/xpImgnsxuqb3VOp0QRtXTS5uBRi.jpg",
-    "releaseYear": 2026,
-    "rating": "4.8",
-    "genres": [
-      "Historia",
-      "Acción",
-      "Drama"
-    ],
-    "imdb_id": "mov_1389379"
   },
   {
     "id": "mov_693134",

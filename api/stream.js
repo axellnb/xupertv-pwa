@@ -18,10 +18,11 @@ const DEFAULT_TRACKERS = [
 ];
 
 export default async function handler(req, res) {
-  // Enable CORS
+  // CORS & Cache Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=7200');
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -29,12 +30,13 @@ export default async function handler(req, res) {
 
   const { type = 'movie', id } = req.query;
 
-  if (!id) {
-    return res.status(400).json({ error: 'Missing id parameter' });
+  // Strict Parameter Validation
+  if (!['movie', 'series'].includes(type) || !id || !/^tt\d+(:\d+:\d+)?$/.test(id)) {
+    return res.status(400).json({ error: 'Parámetros inválidos' });
   }
 
   try {
-    const providerUrl = `https://torrentio.strem.fun/stream/${type}/${id}.json`;
+    const providerUrl = `https://torrentio.strem.fun/stream/${type}/${encodeURIComponent(id)}.json`;
     const response = await fetch(providerUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
       signal: AbortSignal.timeout(6000)
@@ -47,18 +49,19 @@ export default async function handler(req, res) {
     const data = await response.json();
     const rawStreams = data.streams || [];
 
-    const spanishKeywords = ['lat', 'latino', 'cinecalidad', 'wolfmax4k', 'castellano', 'dual-lat', 'dual', 'esp', '🇪🇸', '🇲🇽'];
-    const lowQualityKeywords = ['cam', 'telesync', 'tele-sync', 'hdcam', 'camrip', 'predvd'];
+    // Precise Regex Patterns (Word boundaries avoid false positives on 'Cameron', 'Atlas', etc.)
+    const spanishRegex = /\b(lat|latino|castellano|dual|esp)\b|cinecalidad|wolfmax4k|[🇪🇸🇲🇽]/i;
+    const lowQualityRegex = /\b(cam|telesync|tele-sync|hdcam|camrip|predvd)\b/i;
 
     // Filter and score streams
     const scored = rawStreams
       .filter(s => {
         const text = ((s.title || '') + ' ' + (s.name || '')).toLowerCase();
-        return !lowQualityKeywords.some(bad => text.includes(bad));
+        return !lowQualityRegex.test(text);
       })
       .map(s => {
         const text = ((s.title || '') + ' ' + (s.name || '')).toLowerCase();
-        const isSpanish = spanishKeywords.some(kw => text.includes(kw));
+        const isSpanish = spanishRegex.test(text);
 
         // Extract seeds count
         const seedsMatch = (s.title || '').match(/👤\s*(\d+)/);
@@ -68,9 +71,9 @@ export default async function handler(req, res) {
         if (isSpanish) score += 5000;
 
         let quality = '1080p';
-        if (text.includes('2160p') || text.includes('4k')) quality = '4K UHD';
-        else if (text.includes('720p')) quality = '720p HD';
-        else if (text.includes('1080p')) quality = '1080p FHD';
+        if (/\b(2160p|4k|uhd)\b/i.test(text)) quality = '4K UHD';
+        else if (/\b720p\b/i.test(text)) quality = '720p HD';
+        else if (/\b1080p\b/i.test(text)) quality = '1080p FHD';
 
         return { s, isSpanish, seeds, score, quality };
       });
@@ -97,7 +100,6 @@ export default async function handler(req, res) {
         : (s.infoHash ? [`dht:${s.infoHash}`, ...DEFAULT_TRACKERS.map(t => `tracker:${t}`)] : []);
 
       return {
-        ...s,
         magnet,
         quality,
         isSpanish,

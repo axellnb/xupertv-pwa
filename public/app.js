@@ -1,15 +1,45 @@
 // XuperTV PWA Engine & Stremio Client
 (() => {
+  // Safe LocalStorage Helper (Prevents crash if corrupted)
+  function getSafeStorage(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      return val ? JSON.parse(val) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function setSafeStorage(key, val) {
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch (_) {}
+  }
+
+  // HTML Entity Sanitizer (Prevents XSS in dynamic templates)
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Series Metadata Memory Cache
+  const seriesMetaCache = new Map();
+
   // Application State
   const state = {
     movies: [],
     series: [],
-    favorites: JSON.parse(localStorage.getItem('xupertv_favs') || '[]'),
+    favorites: getSafeStorage('xupertv_favs', []),
     activeItem: null,
     activeType: 'movie',
     currentSeason: 1,
     currentEpisode: 1,
-    currentServer: 'vidsrc',
+    currentServer: localStorage.getItem('xupertv_last_server') || 'vidsrc',
     searchDebounce: null,
   };
 
@@ -68,7 +98,6 @@
   const playerContainer = document.getElementById('playerContainer');
   const playerOverlay = document.getElementById('playerOverlay');
   const closePlayerBtn = document.getElementById('closePlayerBtn');
-  const closePlayerIconBtn = document.getElementById('closePlayerIconBtn');
   const playerIframe = document.getElementById('playerIframe');
   const playerStreamTitle = document.getElementById('playerStreamTitle');
   const serverMenuBtn = document.getElementById('serverMenuBtn');
@@ -168,55 +197,53 @@
     heroInfoBtn.onclick = () => openDetail(item, typeLabel);
   }
 
-  // Render Single Media Card (No emojis, clean SVGs)
+  // Render Single Media Card (XSS-Safe, accessible, uniform tap behavior)
   function createMediaCard(item, type) {
     const card = document.createElement('div');
     card.className = 'media-card';
-    const isMovie = type === 'movie' || item.id.startsWith('mov_');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+
+    const isMovie = type === 'movie' || (item.id && item.id.startsWith('mov_'));
     const itemType = isMovie ? 'movie' : 'series';
+
+    const safeTitle = escapeHtml(item.title);
+    const safePoster = escapeHtml(item.posterUrl || '');
+    const rawRating = item.rating ? String(item.rating).trim() : '';
+    const showRating = (rawRating && rawRating !== '0.0' && rawRating !== '0' && rawRating !== 'N/A');
+    const safeYear = escapeHtml(item.releaseYear || '');
+    const firstGenre = (item.genres && item.genres[0]) ? escapeHtml(item.genres[0]) : '';
 
     card.innerHTML = `
       <div class="media-poster-box">
-        <img class="media-poster" src="${item.posterUrl || ''}" alt="${item.title}" loading="lazy" onerror="this.src='/icons/icon-512.png'">
+        <img class="media-poster" src="${safePoster}" alt="${safeTitle}" loading="lazy" onerror="this.src='/icons/icon-512.png'">
+        ${showRating ? `
         <span class="media-rating-pill">
           <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
           </svg>
-          <span>${item.rating || 'N/A'}</span>
-        </span>
+          <span>${escapeHtml(rawRating)}</span>
+        </span>` : ''}
         <span class="media-type-pill">${isMovie ? 'Película' : 'Serie'}</span>
-        <button class="card-info-btn" title="Detalles y Sinopsis" aria-label="Detalles">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-        </button>
       </div>
       <div class="media-info">
-        <h4 class="media-title" title="${item.title}">${item.title}</h4>
+        <h4 class="media-title" title="${safeTitle}">${safeTitle}</h4>
         <div class="media-meta">
-          <span>${item.releaseYear || ''}</span>
-          <span>${(item.genres && item.genres[0]) || ''}</span>
+          <span>${safeYear}</span>
+          <span>${firstGenre}</span>
         </div>
       </div>
     `;
 
-    // Tap card: If movie, play immediately! If series, open episode selector!
-    if (isMovie) {
-      card.onclick = () => openWebPlayer(item, 'movie', 1, 1);
-    } else {
-      card.onclick = () => openDetail(item, 'series');
-    }
-
-    // Tap info icon -> Open detail dialog
-    const infoBtn = card.querySelector('.card-info-btn');
-    if (infoBtn) {
-      infoBtn.onclick = (e) => {
-        e.stopPropagation();
-        openDetail(item, itemType);
-      };
-    }
+    // Tapping ANY card opens the detail dialog (prevents accidental video playback while scrolling on mobile)
+    const handleCardClick = () => openDetail(item, itemType);
+    card.onclick = handleCardClick;
+    card.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleCardClick();
+      }
+    };
 
     return card;
   }
@@ -279,52 +306,109 @@
     detailDialog.showModal();
   }
 
-  function setupSeriesSelects() {
+  // Series Episodes & Real Metadata Mapping
+  async function setupSeriesSelects() {
+    const item = state.activeItem;
+    const imdbId = item.imdb_id;
+    seasonSelect.innerHTML = '<option value="1">Cargando temporadas...</option>';
+    episodesGrid.innerHTML = '<div style="padding:10px; color:#888; font-size:0.8rem;">Consultando capítulos oficiales...</div>';
+
+    let videos = null;
+    if (imdbId && imdbId.startsWith('tt')) {
+      if (seriesMetaCache.has(imdbId)) {
+        videos = seriesMetaCache.get(imdbId);
+      } else {
+        try {
+          const res = await fetch(`https://v3-cinemeta.strem.io/meta/series/${encodeURIComponent(imdbId)}.json`);
+          const data = await res.json();
+          if (data && data.meta && Array.isArray(data.meta.videos) && data.meta.videos.length > 0) {
+            videos = data.meta.videos;
+            seriesMetaCache.set(imdbId, videos);
+          }
+        } catch (_) {}
+      }
+    }
+
+    // Build real seasons and episodes structure
+    const seasonMap = new Map();
+    if (videos && videos.length > 0) {
+      videos.forEach(v => {
+        const s = v.season;
+        const e = v.episode;
+        if (s && e) {
+          if (!seasonMap.has(s)) seasonMap.set(s, []);
+          seasonMap.get(s).push(v);
+        }
+      });
+    }
+
+    // Fallback if metadata not available
+    if (seasonMap.size === 0) {
+      for (let s = 1; s <= 5; s++) {
+        const eps = [];
+        for (let e = 1; e <= 12; e++) {
+          eps.push({ season: s, episode: e, name: `Episodio ${e}` });
+        }
+        seasonMap.set(s, eps);
+      }
+    }
+
+    // Populate season select with real counts
     seasonSelect.innerHTML = '';
-    // Support series with up to 10 seasons
-    for (let s = 1; s <= 10; s++) {
+    const sortedSeasons = Array.from(seasonMap.keys()).sort((a, b) => a - b);
+    sortedSeasons.forEach(s => {
       const opt = document.createElement('option');
       opt.value = s;
-      opt.textContent = `Temporada ${s}`;
+      const count = seasonMap.get(s).length;
+      opt.textContent = `Temporada ${s} (${count} eps)`;
       seasonSelect.appendChild(opt);
-    }
+    });
+
+    state.currentSeason = sortedSeasons.includes(state.currentSeason) ? state.currentSeason : sortedSeasons[0];
     seasonSelect.value = state.currentSeason;
 
     seasonSelect.onchange = (e) => {
       state.currentSeason = parseInt(e.target.value, 10);
       state.currentEpisode = 1;
-      renderEpisodesGrid();
+      renderEpisodesGrid(seasonMap.get(state.currentSeason) || []);
+      updateQuickPlayText();
       fetchStreams();
     };
 
-    renderEpisodesGrid();
+    renderEpisodesGrid(seasonMap.get(state.currentSeason) || []);
+    updateQuickPlayText();
   }
 
-  function renderEpisodesGrid() {
+  function updateQuickPlayText() {
+    if (quickPlayBtn) {
+      quickPlayBtn.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        Reproducir T${state.currentSeason} · E${state.currentEpisode}
+      `;
+    }
+  }
+
+  function renderEpisodesGrid(episodesList) {
     if (!episodesGrid) return;
     episodesGrid.innerHTML = '';
-    const totalEps = 24; // Standard TV season episode count
-    for (let ep = 1; ep <= totalEps; ep++) {
+
+    episodesList.forEach(v => {
+      const epNum = v.episode;
       const btn = document.createElement('button');
-      btn.className = `ep-btn ${ep === state.currentEpisode ? 'active' : ''}`;
-      btn.textContent = `Ep ${ep}`;
+      btn.className = `ep-btn ${epNum === state.currentEpisode ? 'active' : ''}`;
+      btn.textContent = `E${epNum}`;
+      btn.title = v.name || `Episodio ${epNum}`;
       btn.onclick = () => {
-        state.currentEpisode = ep;
+        state.currentEpisode = epNum;
         document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        if (quickPlayBtn) {
-          quickPlayBtn.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            Reproducir T${state.currentSeason} E${ep}
-          `;
-        }
-        // Immediately start playing this episode!
-        openWebPlayer(state.activeItem, 'series', state.currentSeason, ep);
+        updateQuickPlayText();
+        fetchStreams();
       };
       episodesGrid.appendChild(btn);
-    }
+    });
   }
 
   // Fetch Streams from Vercel Serverless Function
@@ -574,7 +658,7 @@
       state.favorites.push(item.id);
       showToast('Añadido a Mi Lista');
     }
-    localStorage.setItem('xupertv_favs', JSON.stringify(state.favorites));
+    setSafeStorage('xupertv_favs', state.favorites);
     updateFavButton();
     renderFavorites();
   }
@@ -587,9 +671,16 @@
     favItems.forEach(it => favoritesGrid.appendChild(createMediaCard(it)));
   }
 
-  // Search Logic with Instant Local Filter + Universal Online Cinemeta Fallback
+  // Search Logic with AbortController, Cache & Clean Title Matching
+  let searchAbortController = null;
+  const searchCache = new Map();
+
   function handleSearch(query) {
     clearTimeout(state.searchDebounce);
+    if (searchAbortController) {
+      searchAbortController.abort();
+    }
+
     const q = query.trim().toLowerCase();
 
     if (searchClearBtn) {
@@ -607,51 +698,63 @@
       favoritesSection.style.display = 'none';
       searchResultsSection.style.display = 'block';
 
+      // Match primarily by title or genres (reduces synopsis noise)
       const all = [...state.movies, ...state.series];
       const matches = all.filter(item => {
         const title = (item.title || '').toLowerCase();
-        const overview = (item.overview || '').toLowerCase();
         const genres = (item.genres || []).join(' ').toLowerCase();
-        return title.includes(q) || overview.includes(q) || genres.includes(q);
+        return title.includes(q) || genres.includes(q);
       });
 
       searchResultsTitle.textContent = `Resultados para "${query}" (${matches.length})`;
       searchResultsGrid.innerHTML = '';
       matches.forEach(item => searchResultsGrid.appendChild(createMediaCard(item)));
 
-      // Universal Online Search (Fetches Any Series / Movie in existence from Cinemeta)
+      // Universal Online Search with AbortController & Cache
       if (q.length >= 2) {
-        Promise.all([
-          fetch(`https://v3-cinemeta.strem.io/catalog/series/top/search=${encodeURIComponent(q)}.json`).then(r => r.json()).catch(() => ({ metas: [] })),
-          fetch(`https://v3-cinemeta.strem.io/catalog/movie/top/search=${encodeURIComponent(q)}.json`).then(r => r.json()).catch(() => ({ metas: [] }))
-        ]).then(([seriesRes, moviesRes]) => {
-          if (searchInput.value.trim().toLowerCase() !== q) return; // Stale query
-          const onlineMetas = [...(seriesRes.metas || []), ...(moviesRes.metas || [])];
-          const existingIds = new Set(matches.map(m => m.imdb_id || m.id));
+        if (searchCache.has(q)) {
+          appendOnlineResults(searchCache.get(q), matches, query);
+          return;
+        }
 
-          onlineMetas.forEach(m => {
-            const mId = m.imdb_id || m.id;
-            if (mId && !existingIds.has(mId)) {
-              existingIds.add(mId);
-              const mappedItem = {
-                id: (m.type === 'series' ? 'tv_' : 'mov_') + mId,
-                title: m.name,
-                overview: m.description || '',
-                posterUrl: m.poster || '',
-                backdropUrl: m.background || m.poster || '',
-                releaseYear: parseInt(m.releaseInfo || m.year) || 2022,
-                rating: m.imdbRating || '8.0',
-                genres: m.genres || [m.type === 'series' ? 'Serie' : 'Película'],
-                imdb_id: mId
-              };
-              matches.push(mappedItem);
-              searchResultsGrid.appendChild(createMediaCard(mappedItem));
-            }
-          });
-          searchResultsTitle.textContent = `Resultados para "${query}" (${matches.length})`;
-        });
+        searchAbortController = new AbortController();
+        const signal = searchAbortController.signal;
+
+        Promise.all([
+          fetch(`https://v3-cinemeta.strem.io/catalog/series/top/search=${encodeURIComponent(q)}.json`, { signal }).then(r => r.json()).catch(() => ({ metas: [] })),
+          fetch(`https://v3-cinemeta.strem.io/catalog/movie/top/search=${encodeURIComponent(q)}.json`, { signal }).then(r => r.json()).catch(() => ({ metas: [] }))
+        ]).then(([seriesRes, moviesRes]) => {
+          if (signal.aborted || searchInput.value.trim().toLowerCase() !== q) return;
+          const onlineMetas = [...(seriesRes.metas || []), ...(moviesRes.metas || [])];
+          searchCache.set(q, onlineMetas);
+          appendOnlineResults(onlineMetas, matches, query);
+        }).catch(() => {});
       }
-    }, 180);
+    }, 200);
+  }
+
+  function appendOnlineResults(onlineMetas, matches, query) {
+    const existingIds = new Set(matches.map(m => m.imdb_id || m.id));
+    onlineMetas.forEach(m => {
+      const mId = m.imdb_id || m.id;
+      if (mId && !existingIds.has(mId)) {
+        existingIds.add(mId);
+        const mappedItem = {
+          id: (m.type === 'series' ? 'tv_' : 'mov_') + mId,
+          title: m.name,
+          overview: m.description || '',
+          posterUrl: m.poster || '',
+          backdropUrl: m.background || m.poster || '',
+          releaseYear: parseInt(m.releaseInfo || m.year, 10) || '',
+          rating: m.imdbRating || '',
+          genres: m.genres || [m.type === 'series' ? 'Serie' : 'Película'],
+          imdb_id: mId
+        };
+        matches.push(mappedItem);
+        searchResultsGrid.appendChild(createMediaCard(mappedItem));
+      }
+    });
+    searchResultsTitle.textContent = `Resultados para "${query}" (${matches.length})`;
   }
 
   // Switch Tab Handler
@@ -729,10 +832,6 @@
   };
   closePlayerBtn.addEventListener('click', handlePlayerExit);
   closePlayerBtn.addEventListener('touchend', handlePlayerExit);
-  if (closePlayerIconBtn) {
-    closePlayerIconBtn.addEventListener('click', handlePlayerExit);
-    closePlayerIconBtn.addEventListener('touchend', handlePlayerExit);
-  }
 
   // Mobile Back-Swipe / History Back Navigation to Exit Video
   window.addEventListener('popstate', () => {
@@ -783,6 +882,7 @@
         e.stopPropagation();
         const serverKey = item.dataset.server;
         state.currentServer = serverKey;
+        try { localStorage.setItem('xupertv_last_server', serverKey); } catch (_) {}
         document.querySelectorAll('.server-menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
 

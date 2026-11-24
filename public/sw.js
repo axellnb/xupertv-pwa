@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xupertv-cache-v16';
+const CACHE_NAME = 'xupertv-cache-v18';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -31,12 +31,18 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Network-first strategy: always fetch the latest version from network
+// Network-first with Safe Offline Fallback (Only GET and Same-Origin)
 self.addEventListener('fetch', (e) => {
+  // Only intercept GET requests
+  if (e.request.method !== 'GET') return;
+
   const url = new URL(e.request.url);
 
   // Bypass API calls
-  if (url.pathname.startsWith('/api/')) {
+  if (url.pathname.startsWith('/api/')) return;
+
+  // External requests (Cinemeta, TMDB, metahub) bypass ServiceWorker cache to prevent bloat
+  if (url.origin !== self.location.origin) {
     return;
   }
 
@@ -51,7 +57,14 @@ self.addEventListener('fetch', (e) => {
         }
         return networkResponse;
       })
-      .catch(() => caches.match(e.request))
+      .catch(async () => {
+        const cached = await caches.match(e.request);
+        if (cached) return cached;
+        if (e.request.mode === 'navigate') {
+          return caches.match('/index.html');
+        }
+        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+      })
   );
 });
 
