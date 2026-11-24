@@ -14,6 +14,45 @@ export default async function handler(req, res) {
   const cleanToken = token.trim();
   // TorBox tokens are UUID format (e.g. 8-4-4-4-12 hex format)
   const isTorBox = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanToken);
+  // EasyDebrid tokens are 16 alphanumeric characters
+  const isEasyDebrid = /^[a-z0-9]{16}$/i.test(cleanToken);
+
+  if (isEasyDebrid) {
+    try {
+      // 1. Verify user premium status
+      const userRes = await fetch('https://easydebrid.com/api/v1/user/details', {
+        headers: { 'Authorization': `Bearer ${cleanToken}` }
+      });
+      const userData = await userRes.json();
+      if (userData && !userData.paid_until) {
+        return res.status(400).json({ error: 'La cuenta EasyDebrid no es Premium (requiere suscripción activa en easydebrid.com).' });
+      }
+
+      // 2. Generate direct link
+      const genRes = await fetch('https://easydebrid.com/api/v1/link/generate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${cleanToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url: magnet })
+      });
+      const genData = await genRes.json();
+
+      if (genData?.error) {
+        return res.status(400).json({ error: genData.error });
+      }
+
+      const streamUrl = genData?.url || genData?.data?.link || (genData?.files && genData.files[0]?.url);
+      if (streamUrl) {
+        return res.status(200).json({ streamUrl });
+      }
+
+      return res.status(400).json({ error: 'EasyDebrid no pudo generar el enlace directo para este archivo.' });
+    } catch (err) {
+      return res.status(500).json({ error: `EasyDebrid error: ${err.message}` });
+    }
+  }
 
   if (isTorBox) {
     try {
